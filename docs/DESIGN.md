@@ -24,7 +24,7 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 | **API&nbsp;03** | Use nouns instead of verbs                         | Best practice - https://logius-standaarden.github.io/API-Design-Rules/                                                        |
 | **API&nbsp;04** | Use plurals for resources that affect collections  | Best practice - https://logius-standaarden.github.io/API-Design-Rules/                                                        |
 | **API&nbsp;05** | Consistent datamodel                               | Avoid code duplication, only have `Activity`, `Area`, consider adding an attribute to indicate "non-reporting records" for CA |
-| **API&nbsp;06** | Consistent endpoints                               | Have POST/GET "mirrors" - `POST /ca/areas`, `GET /ca/activities` vs. `GET /str/areas`,` POST /str/activities`                 |
+| **API&nbsp;06** | Consistent endpoints                               | Have POST/GET "mirrors": `POST /ca/areas`, `GET /str/areas`; `POST /str/activities`, `GET /ca/activities`                     |
 | **API&nbsp;07** | Consistent pagination                              | Have `offset` and `limit` for all endpoints with (potential) many records                                                     |
 | **API&nbsp;08** | Syntax validation                                  | Example: `postal code`                                                                                                        |
 | **API&nbsp;09** | Semantical validation                              | Example: `begin timestamp < end timestamp`                                                                                    |
