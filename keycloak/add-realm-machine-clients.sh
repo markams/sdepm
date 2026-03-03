@@ -6,34 +6,40 @@ CREATED_COUNT=0
 UPDATED_COUNT=0
 UNMODIFIED_COUNT=0
 DELETED_COUNT=0
+REJECTED_COUNT=0
 CREATED_ITEMS=""
 UPDATED_ITEMS=""
 UNMODIFIED_ITEMS=""
 DELETED_ITEMS=""
+REJECTED_ITEMS=""
 
 # Check required variables
 if [ -z "${KC_BASE_URL:-}" ]; then
-    echo "❌ Error: KC_BASE_URL is not set" >&2
+    echo "❌ Error: KC_BASE_URL is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
-if [ -z "${KC_APP_REALM:-}" ]; then
-    echo "❌ Error: REALM is not set" >&2
-    exit 1
+if [ -z "${KC_APP_REALM_CONFIG_YAML:-}" ]; then
+    echo "❌ Error: KC_APP_REALM_CONFIG_YAML is not set" >&2; exit 1
 fi
+if [ ! -f "${KC_APP_REALM_CONFIG_YAML}" ]; then
+    echo "❌ Error: KC_APP_REALM_CONFIG_YAML not found: ${KC_APP_REALM_CONFIG_YAML}" >&2; exit 1
+fi
+REALM_NAME=$(yq -r '.config.name' "$KC_APP_REALM_CONFIG_YAML")
+REALM_SHORTNAME=$(yq -r '.config.shortname // ""' "$KC_APP_REALM_CONFIG_YAML")
 
 if [ -z "${KC_APP_REALM_ADMIN_ID:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set" >&2
+    echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_APP_REALM_ADMIN_SECRET:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_ADMIN_SECRET is not set" >&2
+    echo "❌ Error: KC_APP_REALM_ADMIN_SECRET is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_APP_REALM_MACHINE_CLIENT_YAML:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_MACHINE_CLIENT_YAML is not set" >&2
+    echo "❌ Error: KC_APP_REALM_MACHINE_CLIENT_YAML is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
@@ -42,11 +48,20 @@ if [ ! -f "${KC_APP_REALM_MACHINE_CLIENT_YAML}" ]; then
     exit 1
 fi
 
+# Check realm existence
+REALM_CHECK=$(curl -s -o /dev/null -w "%{http_code}" \
+    "${KC_BASE_URL}/realms/${REALM_NAME}/.well-known/openid-configuration")
+if [ "$REALM_CHECK" != "200" ]; then
+    echo "❌ Error: Realm '${REALM_NAME}' does not exist in Keycloak at ${KC_BASE_URL}" >&2
+    echo "💡 Make sure this realm is added first" >&2
+    exit 1
+fi
+
 echo ""
-echo "📦 Creating machine clients in ${KC_APP_REALM} from ${KC_APP_REALM_MACHINE_CLIENT_YAML}..."
+echo "📦 Creating machine clients in ${REALM_NAME} from ${KC_APP_REALM_MACHINE_CLIENT_YAML}..."
 echo "🔐 Authenticating with ${KC_APP_REALM_ADMIN_ID}..."
 
-TOKEN_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/realms/${KC_APP_REALM}/protocol/openid-connect/token" \
+TOKEN_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/realms/${REALM_NAME}/protocol/openid-connect/token" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "client_id=${KC_APP_REALM_ADMIN_ID}" \
     -d "client_secret=${KC_APP_REALM_ADMIN_SECRET}" \
@@ -60,13 +75,13 @@ if [ -z "$TOKEN" ]; then
     echo "" >&2
     echo "Configuration used:" >&2
     echo "  KC_BASE_URL: ${KC_BASE_URL}" >&2
-    echo "  KC_APP_REALM: ${KC_APP_REALM}" >&2
+    echo "  REALM_NAME: ${REALM_NAME}" >&2
     echo "  KC_APP_REALM_ADMIN_ID: ${KC_APP_REALM_ADMIN_ID}" >&2
     echo "  KC_APP_REALM_ADMIN_SECRET: (${#KC_APP_REALM_ADMIN_SECRET} characters)" >&2
     echo "  KC_APP_REALM_MACHINE_CLIENT_YAML: ${KC_APP_REALM_MACHINE_CLIENT_YAML}" >&2
     echo "" >&2
     echo "💡 Suggestion: KC_APP_REALM_ADMIN_ID and KC_APP_REALM_ADMIN_SECRET should be" >&2
-    echo "   the client_id and client_secret of a service account client (cicd_admin) in realm '${KC_APP_REALM}'" >&2
+    echo "   the client_id and client_secret of a service account client (cicd_admin) in realm '${REALM_NAME}'" >&2
     exit 1
 fi
 
@@ -74,22 +89,36 @@ echo "✅ Authentication successful"
 echo "📄 Processing clients from ${KC_APP_REALM_MACHINE_CLIENT_YAML}..."
 
 CLIENT_COUNT=$(yq '.clients | length' "$KC_APP_REALM_MACHINE_CLIENT_YAML")
-REALM_PREFIX="${KC_APP_REALM}-"
+REALM_PREFIX="${REALM_NAME}-"
+SHORTNAME_PREFIX="${REALM_SHORTNAME:+${REALM_SHORTNAME}-}"
 
-# First pass: validate all clients have REALM prefix
+# First pass: validate all clients have REALM prefix or shortname prefix, collect valid indices
+VALID_INDICES=()
 for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     CLIENT_ID=$(yq -r ".clients[$i].id" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
 
-    # Validate that client ID has REALM prefix
-    if [[ ! "$CLIENT_ID" =~ ^${REALM_PREFIX} ]]; then
-        echo "❌ Error: Client ID '$CLIENT_ID' does not have required prefix '${REALM_PREFIX}'" >&2
-        echo "All client IDs in YAML must start with '${REALM_PREFIX}'" >&2
-        exit 1
+    if [[ "$CLIENT_ID" =~ ^${REALM_PREFIX} ]] || { [ -n "$SHORTNAME_PREFIX" ] && [[ "$CLIENT_ID" =~ ^${SHORTNAME_PREFIX} ]]; }; then
+        VALID_INDICES+=("$i")
+    else
+        echo "⚠️  Rejected: '$CLIENT_ID' — missing required prefix '${REALM_PREFIX}' or '${SHORTNAME_PREFIX}'"
+        REJECTED_COUNT=$((REJECTED_COUNT + 1))
+        REJECTED_ITEMS="${REJECTED_ITEMS:+$REJECTED_ITEMS, }$CLIENT_ID"
     fi
 done
 
-# Second pass: process clients
-for i in $(seq 0 $((CLIENT_COUNT - 1))); do
+# Build desired client IDs from valid entries only
+DESIRED_CLIENT_IDS="["
+for i in "${VALID_INDICES[@]+"${VALID_INDICES[@]}"}"; do
+    CLIENT_ID=$(yq -r ".clients[$i].id" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
+    if [ "$DESIRED_CLIENT_IDS" != "[" ]; then
+        DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS,"
+    fi
+    DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS\"$CLIENT_ID\""
+done
+DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS]"
+
+# Second pass: process valid clients
+for i in "${VALID_INDICES[@]+"${VALID_INDICES[@]}"}"; do
     CLIENT_ID=$(yq -r ".clients[$i].id" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
     CLIENT_NAME=$(yq -r ".clients[$i].name" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
     CLIENT_DESC=$(yq -r ".clients[$i].description" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
@@ -98,7 +127,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
 
     echo "🔍 Checking if client $CLIENT_ID exists..."
     CLIENT_CHECK=$(curl -s -H "Authorization: Bearer $TOKEN" \
-        "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=$CLIENT_ID")
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=$CLIENT_ID")
 
     if [ "$(echo "$CLIENT_CHECK" | jq 'length')" -gt 0 ]; then
         CLIENT_UUID=$(echo "$CLIENT_CHECK" | jq -r '.[0].id')
@@ -116,7 +145,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
         # Check secret if defined in YAML
         if [ "$CLIENT_SECRET" != "null" ] && [ -n "$CLIENT_SECRET" ]; then
             CURRENT_SECRET_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-                "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/client-secret")
+                "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/client-secret")
             CURRENT_SECRET=$(echo "$CURRENT_SECRET_RESPONSE" | jq -r '.value // ""')
             if [ "$CURRENT_SECRET" != "$CLIENT_SECRET" ]; then
                 NEEDS_UPDATE=true
@@ -140,7 +169,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
                 UPDATE_DATA=$(echo "$UPDATE_DATA" | jq 'del(.attributes["access.token.lifespan"])')
             fi
 
-            UPDATE_RESPONSE=$(curl -s -X PUT "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID" \
+            UPDATE_RESPONSE=$(curl -s -X PUT "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID" \
                 -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "$UPDATE_DATA" \
@@ -189,7 +218,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
             CLIENT_DATA=$(echo "$CLIENT_DATA" | jq --arg lifespan "$ACCESS_TOKEN_LIFESPAN" '.attributes["access.token.lifespan"] = $lifespan')
         fi
 
-        CREATE_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients" \
+        CREATE_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d "$CLIENT_DATA" \
@@ -206,12 +235,12 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
                 CREATED_ITEMS="$CREATED_ITEMS, $CLIENT_ID"
             fi
             CLIENT_CHECK=$(curl -s -H "Authorization: Bearer $TOKEN" \
-                "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=$CLIENT_ID")
+                "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=$CLIENT_ID")
             CLIENT_UUID=$(echo "$CLIENT_CHECK" | jq -r '.[0].id')
 
             # Retrieve the generated secret from Keycloak
             CLIENT_SECRET_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-                "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/client-secret")
+                "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/client-secret")
             GENERATED_SECRET=$(echo "$CLIENT_SECRET_RESPONSE" | jq -r '.value')
 
             # echo "🔑 Secret for $CLIENT_ID: $GENERATED_SECRET"
@@ -243,7 +272,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
             }
         }')
 
-    MAPPER_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/protocol-mappers/models" \
+    MAPPER_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/protocol-mappers/models" \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
         -d "$CLIENT_ID_MAPPER" \
@@ -276,7 +305,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
             }
         }')
 
-    MAPPER_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/protocol-mappers/models" \
+    MAPPER_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/protocol-mappers/models" \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
         -d "$CLIENT_NAME_MAPPER" \
@@ -299,16 +328,16 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
 
         # Get service account user
         SA_USER=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/service-account-user")
+            "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/service-account-user")
         SA_USER_ID=$(echo "$SA_USER" | jq -r '.id')
 
         # Get available roles in realm
         AVAILABLE_ROLES=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/roles")
+            "${KC_BASE_URL}/admin/realms/${REALM_NAME}/roles")
 
         # Get currently assigned realm roles for service account
         CURRENT_ROLES=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/users/$SA_USER_ID/role-mappings/realm")
+            "${KC_BASE_URL}/admin/realms/${REALM_NAME}/users/$SA_USER_ID/role-mappings/realm")
 
         # Build desired roles array from YAML (validate all roles exist)
         DESIRED_ROLES="["
@@ -342,7 +371,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
 
         # Add missing roles
         if [ "$(echo "$ROLES_TO_ADD" | jq 'length')" -gt 0 ]; then
-            ADD_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/users/$SA_USER_ID/role-mappings/realm" \
+            ADD_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${REALM_NAME}/users/$SA_USER_ID/role-mappings/realm" \
                 -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "$ROLES_TO_ADD" \
@@ -362,7 +391,7 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
 
         # Remove obsolete roles
         if [ "$(echo "$ROLES_TO_REMOVE" | jq 'length')" -gt 0 ]; then
-            REMOVE_RESPONSE=$(curl -s -X DELETE "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/users/$SA_USER_ID/role-mappings/realm" \
+            REMOVE_RESPONSE=$(curl -s -X DELETE "${KC_BASE_URL}/admin/realms/${REALM_NAME}/users/$SA_USER_ID/role-mappings/realm" \
                 -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "$ROLES_TO_REMOVE" \
@@ -388,55 +417,54 @@ for i in $(seq 0 $((CLIENT_COUNT - 1))); do
     fi
 done
 
-# Remove clients with REALM prefix that are not in YAML
-echo "🔍 Checking for clients to remove..."
-
-# Build list of desired client IDs
-DESIRED_CLIENT_IDS="["
-for i in $(seq 0 $((CLIENT_COUNT - 1))); do
-    CLIENT_ID=$(yq -r ".clients[$i].id" "$KC_APP_REALM_MACHINE_CLIENT_YAML")
-    if [ "$DESIRED_CLIENT_IDS" != "[" ]; then
-        DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS,"
-    fi
-    DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS\"$CLIENT_ID\""
-done
-DESIRED_CLIENT_IDS="$DESIRED_CLIENT_IDS]"
-
-# Get all clients in realm
-ALL_CLIENTS=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients")
-
-# Find machine clients with REALM prefix that are not in YAML
-# Only target clients with serviceAccountsEnabled=true and standardFlowEnabled=false (machine clients)
-CLIENTS_TO_REMOVE=$(echo "$ALL_CLIENTS" | jq -r --argjson desired "$DESIRED_CLIENT_IDS" --arg prefix "${REALM_PREFIX}" \
-    '[.[] | select(.clientId | startswith($prefix)) | select(.serviceAccountsEnabled == true and .standardFlowEnabled == false) | select([.clientId] | inside($desired) | not) | {id: .id, clientId: .clientId}] | .[]')
-
-if [ -n "$CLIENTS_TO_REMOVE" ]; then
-    echo "$CLIENTS_TO_REMOVE" | jq -c '.' | while IFS= read -r CLIENT_OBJ; do
-        CLIENT_UUID=$(echo "$CLIENT_OBJ" | jq -r '.id')
-        CLIENT_ID=$(echo "$CLIENT_OBJ" | jq -r '.clientId')
-
-        echo "🗑️  Removing client $CLIENT_ID (not in YAML)..."
-        DELETE_RESPONSE=$(curl -s -X DELETE "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID" \
-            -H "Authorization: Bearer $TOKEN" \
-            -w "%{http_code}")
-
-        if [ "$DELETE_RESPONSE" = "204" ] || [ "$DELETE_RESPONSE" = "200" ]; then
-            echo "✅ Client $CLIENT_ID removed successfully"
-            DELETED_COUNT=$((DELETED_COUNT + 1))
-            if [ -z "$DELETED_ITEMS" ]; then
-                DELETED_ITEMS="$CLIENT_ID"
-            else
-                DELETED_ITEMS="$DELETED_ITEMS, $CLIENT_ID"
-            fi
-        else
-            echo "❌ Failed to remove client $CLIENT_ID" >&2
-            echo "Response: $DELETE_RESPONSE" >&2
-            exit 1
-        fi
-    done
+# Remove clients with REALM prefix (or shortname prefix) that are not in YAML
+# Skip deletion when there are no valid entries (e.g. NOK test files) to avoid wiping existing clients
+if [ ${#VALID_INDICES[@]} -eq 0 ]; then
+    echo "⏭️  Skipping deletion check (no valid entries in YAML)"
 else
-    echo "✅ No clients to remove"
+    echo "🔍 Checking for clients to remove..."
+
+    # Get all clients in realm
+    ALL_CLIENTS=$(curl -s -H "Authorization: Bearer $TOKEN" \
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients")
+
+    # Find machine clients with REALM prefix that are not in YAML
+    # Only target clients with serviceAccountsEnabled=true and standardFlowEnabled=false (machine clients)
+    if [ -n "$SHORTNAME_PREFIX" ]; then
+        CLIENTS_TO_REMOVE=$(echo "$ALL_CLIENTS" | jq -r --argjson desired "$DESIRED_CLIENT_IDS" --arg prefix "${REALM_PREFIX}" --arg shortnamePrefix "${SHORTNAME_PREFIX}" \
+            '[.[] | select((.clientId | startswith($prefix)) or (.clientId | startswith($shortnamePrefix))) | select(.serviceAccountsEnabled == true and .standardFlowEnabled == false) | select([.clientId] | inside($desired) | not) | {id: .id, clientId: .clientId}] | .[]')
+    else
+        CLIENTS_TO_REMOVE=$(echo "$ALL_CLIENTS" | jq -r --argjson desired "$DESIRED_CLIENT_IDS" --arg prefix "${REALM_PREFIX}" \
+            '[.[] | select(.clientId | startswith($prefix)) | select(.serviceAccountsEnabled == true and .standardFlowEnabled == false) | select([.clientId] | inside($desired) | not) | {id: .id, clientId: .clientId}] | .[]')
+    fi
+
+    if [ -n "$CLIENTS_TO_REMOVE" ]; then
+        echo "$CLIENTS_TO_REMOVE" | jq -c '.' | while IFS= read -r CLIENT_OBJ; do
+            CLIENT_UUID=$(echo "$CLIENT_OBJ" | jq -r '.id')
+            CLIENT_ID=$(echo "$CLIENT_OBJ" | jq -r '.clientId')
+
+            echo "🗑️  Removing client $CLIENT_ID (not in YAML)..."
+            DELETE_RESPONSE=$(curl -s -X DELETE "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID" \
+                -H "Authorization: Bearer $TOKEN" \
+                -w "%{http_code}")
+
+            if [ "$DELETE_RESPONSE" = "204" ] || [ "$DELETE_RESPONSE" = "200" ]; then
+                echo "✅ Client $CLIENT_ID removed successfully"
+                DELETED_COUNT=$((DELETED_COUNT + 1))
+                if [ -z "$DELETED_ITEMS" ]; then
+                    DELETED_ITEMS="$CLIENT_ID"
+                else
+                    DELETED_ITEMS="$DELETED_ITEMS, $CLIENT_ID"
+                fi
+            else
+                echo "❌ Failed to remove client $CLIENT_ID" >&2
+                echo "Response: $DELETE_RESPONSE" >&2
+                exit 1
+            fi
+        done
+    else
+        echo "✅ No clients to remove"
+    fi
 fi
 
 echo ""
@@ -460,6 +488,11 @@ if [ $UNMODIFIED_COUNT -gt 0 ]; then
     echo "  Unmodified: $UNMODIFIED_COUNT client(s) - $UNMODIFIED_ITEMS"
 else
     echo "  Unmodified: 0 client(s)"
+fi
+if [ $REJECTED_COUNT -gt 0 ]; then
+    echo "  Rejected: $REJECTED_COUNT client(s) - $REJECTED_ITEMS"
+else
+    echo "  Rejected: 0 client(s)"
 fi
 echo ""
 echo "✅ Machine clients setup completed"

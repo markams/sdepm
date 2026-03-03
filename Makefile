@@ -179,9 +179,7 @@ keycloak-up: postgres-up ## Start keycloak
 	docker compose up -d keycloak
 	@echo "✅ Keycloak started!"
 	@echo "🚀 Configuring Keycloak..."
-	@$(MAKE) --no-print-directory .keycloak-realm || echo Realm already added
-	@$(MAKE) --no-print-directory .keycloak-roles || echo Roles already added
-	@$(MAKE) --no-print-directory .keycloak-machine-clients || echo Machine clients already added
+	@$(MAKE) --no-print-directory .keycloak-machine-clients
 	@echo "✅ Keycloak configured!"
 
 keycloak-down: ## Stop and remove keycloak (including volumes)
@@ -220,8 +218,6 @@ up: .build .clean-stale ## Start
 	@echo "✅ Fullstack started!"
 
 	@echo "🚀 Configuring Keycloak..."
-	@$(MAKE) --no-print-directory .keycloak-realm
-	@$(MAKE) --no-print-directory .keycloak-roles
 	@$(MAKE) --no-print-directory .keycloak-machine-clients
 	@echo "✅ Keycloak configured!"
 

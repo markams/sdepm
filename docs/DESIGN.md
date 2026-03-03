@@ -40,5 +40,5 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 
 | #               | Decision                                                       | Motivation/example                                                                                                           |
 | :-------------- | :------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| **SEC&nbsp;01** | oAuth2 with JWT [*]                                            | Is the standard for trusted machine-to-machine (M2M) interaction - https://datatracker.ietf.org/doc/html/rfc6749#section-4.4 |
+| **SEC&nbsp;01** | oAuth2 with JWT                                                | Is the standard for trusted machine-to-machine (M2M) interaction - https://datatracker.ietf.org/doc/html/rfc6749#section-4.4 |
 | **SEC&nbsp;02** | Smaller platforms can delegate API-invocation to third-parties | Platform arranges data submission with their party; the party becomes registered in SDEP                                     |

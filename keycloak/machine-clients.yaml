@@ -1,8 +1,9 @@
 clients:
 
-  # -- Test clients (automated testruns, ephemeral) => naming convention sdep-test-*
+  # Test clients (automated testruns, ephemeral)
+  # Naming convention sdep-test-ca*, sdep-test-str*, for automatic cleanup
 
-  # Short-term rental platforms (STR)
+  # -- Short-term rental platforms (STR)
   - id: "sdep-test-str01"
     secret: "sdep-test-str01"
     name: "Test STR 01 (test automation, ephemeral)"
@@ -12,7 +13,7 @@ clients:
       - sdep_read
       - sdep_write
 
-  # Competent authorities (CA)
+  # -- Competent authorities (CA)
   - id: "sdep-test-ca01"
     secret: "sdep-test-ca01"
     name: "Test CA 01 (test automation, ephemeral)"
@@ -22,9 +23,10 @@ clients:
       - sdep_read
       - sdep_write
 
-  # -- Test clients (interactive usage, persistent) => naming convention sdep-* => NOT to be prefixed with "test"
+  # Test clients (interactive usage)
+  # Naming convention sdep-ca*, sdep-str* (avoid "sdep-test" to refrain from automatic cleanup)
 
-  # Short-term rental platforms (STR)
+  # -- Short-term rental platforms (STR)
   - id: "sdep-str01"
     secret: "sdep-str01"
     name: "Test STR 01 (interactive usage, persistent)"
@@ -34,7 +36,7 @@ clients:
       - sdep_read
       - sdep_write
 
-  # Competent authorities (CA)
+  # -- Competent authorities (CA)
   - id: "sdep-ca01"
     secret: "sdep-ca01"
     name: "Test CA 01 (interactive usage, persistent)"
@@ -44,8 +46,10 @@ clients:
       - sdep_read
       - sdep_write
 
-  # -- Real clients (interactive usage, persistent) => naming convention sdep-<ca|str>* => NOT to be prefixed with "test"
+  #  Test clients (interactive usage, deployed with predefined testdata)
+  #  Naming convention sdep-ca*, sdep-str* (avoid "sdep-test" to refrain from automatic cleanup)
 
+  # -- Competent authorities (CA)
   - id: "sdep-ca0363"
     secret: "sdep-ca0363"
     name: "Gemeente Amsterdam"

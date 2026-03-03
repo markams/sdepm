@@ -1,0 +1,4 @@
+config:
+  name: sdep
+  display-name: "SDEP application"
+  shortname: ""

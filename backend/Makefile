@@ -1,4 +1,4 @@
-.PHONY: install \
+.PHONY: init install \
         upgrade upgrade-sql downgrade revision show-history show-current \
         clean-stale up dev down \
         test-crud test-services test-api test-security test test-coverage \
@@ -15,9 +15,14 @@ APP_NAME := sdep-backend
 
 ##@ Dependency management
 
-install: ## Install dependencies
-	@echo "📦 Installing dependencies..."
+init: ## First-time setup (generates uv.lock)
+	@echo "📦 Initializing dependencies..."
 	uv sync
+	@echo "✅ Dependencies initialized!"
+
+install: ## Install dependencies (from lockfile)
+	@echo "📦 Installing dependencies..."
+	uv sync --frozen
 	@echo "✅ Dependencies installed!"
 
 ##@ Alembic

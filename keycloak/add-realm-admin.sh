@@ -9,37 +9,50 @@ UNMODIFIED_ITEMS=""
 
 # Check required variables
 if [ -z "${KC_BASE_URL:-}" ]; then
-    echo "❌ Error: KC_BASE_URL is not set" >&2
+    echo "❌ Error: KC_BASE_URL is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
-if [ -z "${KC_APP_REALM:-}" ]; then
-    echo "❌ Error: REALM is not set" >&2
-    exit 1
+if [ -z "${KC_APP_REALM_CONFIG_YAML:-}" ]; then
+    echo "❌ Error: KC_APP_REALM_CONFIG_YAML is not set" >&2; exit 1
 fi
+if [ ! -f "${KC_APP_REALM_CONFIG_YAML}" ]; then
+    echo "❌ Error: KC_APP_REALM_CONFIG_YAML not found: ${KC_APP_REALM_CONFIG_YAML}" >&2; exit 1
+fi
+REALM_NAME=$(yq -r '.config.name' "$KC_APP_REALM_CONFIG_YAML")
+REALM_SHORTNAME=$(yq -r '.config.shortname // ""' "$KC_APP_REALM_CONFIG_YAML")
 
 if [ -z "${KC_ADMIN_REALM_ADMIN_USERNAME:-}" ]; then
-    echo "❌ Error: KC_ADMIN_REALM_ADMIN_USERNAME is not set" >&2
+    echo "❌ Error: KC_ADMIN_REALM_ADMIN_USERNAME is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_ADMIN_REALM_ADMIN_PASSWORD:-}" ]; then
-    echo "❌ Error: KC_ADMIN_REALM_ADMIN_PASSWORD is not set" >&2
+    echo "❌ Error: KC_ADMIN_REALM_ADMIN_PASSWORD is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_APP_REALM_ADMIN_ID:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set" >&2
+    echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_APP_REALM_ADMIN_NAME:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_ADMIN_NAME is not set" >&2
+    echo "❌ Error: KC_APP_REALM_ADMIN_NAME is not set (commandline .env* or in pipeline)" >&2
     exit 1
 fi
 
 if [ -z "${KC_APP_REALM_ADMIN_DESC:-}" ]; then
-    echo "❌ Error: KC_APP_REALM_ADMIN_DESC is not set" >&2
+    echo "❌ Error: KC_APP_REALM_ADMIN_DESC is not set (commandline .env* or in pipeline)" >&2
+    exit 1
+fi
+
+# Check realm existence
+REALM_CHECK=$(curl -s -o /dev/null -w "%{http_code}" \
+    "${KC_BASE_URL}/realms/${REALM_NAME}/.well-known/openid-configuration")
+if [ "$REALM_CHECK" != "200" ]; then
+    echo "❌ Error: Realm '${REALM_NAME}' does not exist in Keycloak at ${KC_BASE_URL}" >&2
+    echo "💡 Make sure this realm is added first" >&2
     exit 1
 fi
 
@@ -48,7 +61,7 @@ CLIENT_ID="${KC_APP_REALM_ADMIN_ID}"
 CLIENT_NAME="${KC_APP_REALM_ADMIN_NAME}"
 CLIENT_DESC="${KC_APP_REALM_ADMIN_DESC}"
 
-echo "📦 Creating CI/CD admin service account in ${KC_APP_REALM}..."
+echo "📦 Creating CI/CD admin service account in ${REALM_NAME}..."
 echo "🔐 Authenticating with Keycloak admin..."
 
 TOKEN_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/realms/master/protocol/openid-connect/token" \
@@ -66,7 +79,7 @@ if [ -z "$TOKEN" ]; then
     echo "" >&2
     echo "Configuration used:" >&2
     echo "  KC_BASE_URL: ${KC_BASE_URL}" >&2
-    echo "  KC_APP_REALM: ${KC_APP_REALM}" >&2
+    echo "  REALM_NAME: ${REALM_NAME}" >&2
     echo "  KC_ADMIN_REALM_ADMIN_USERNAME: ${KC_ADMIN_REALM_ADMIN_USERNAME}" >&2
     echo "  KC_ADMIN_REALM_ADMIN_PASSWORD: (${#KC_ADMIN_REALM_ADMIN_PASSWORD} characters)" >&2
     echo "" >&2
@@ -79,7 +92,7 @@ echo "✅ Authentication successful"
 echo "🔍 Checking if client $CLIENT_ID exists..."
 
 CLIENT_CHECK=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=$CLIENT_ID")
+    "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=$CLIENT_ID")
 
 if [ "$(echo "$CLIENT_CHECK" | jq 'length')" -gt 0 ]; then
     echo "✅ Client $CLIENT_ID already exists"
@@ -89,7 +102,7 @@ if [ "$(echo "$CLIENT_CHECK" | jq 'length')" -gt 0 ]; then
 
     # Get existing secret
     CLIENT_SECRET_OBJ=$(curl -s -H "Authorization: Bearer $TOKEN" \
-        "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/client-secret")
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/client-secret")
     CLIENT_SECRET=$(echo "$CLIENT_SECRET_OBJ" | jq -r '.value')
 else
     echo "📝 Creating client $CLIENT_ID..."
@@ -115,7 +128,7 @@ else
             secret: $secret
         }')
 
-    CREATE_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients" \
+    CREATE_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients" \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
         -d "$CLIENT_DATA" \
@@ -128,7 +141,7 @@ else
         CREATED_COUNT=$((CREATED_COUNT + 1))
         CREATED_ITEMS="$CLIENT_ID"
         CLIENT_CHECK=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=$CLIENT_ID")
+            "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=$CLIENT_ID")
         CLIENT_UUID=$(echo "$CLIENT_CHECK" | jq -r '.[0].id')
     else
         echo "❌ Failed to create client $CLIENT_ID" >&2
@@ -140,19 +153,19 @@ fi
 # Get service account user
 echo "🔍 Getting service account user..."
 SA_USER=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$CLIENT_UUID/service-account-user")
+    "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$CLIENT_UUID/service-account-user")
 SA_USER_ID=$(echo "$SA_USER" | jq -r '.id')
 
 # Get realm-management client UUID
 echo "🔍 Getting realm-management client..."
 REALM_MGMT_CLIENT=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=realm-management")
+    "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=realm-management")
 REALM_MGMT_UUID=$(echo "$REALM_MGMT_CLIENT" | jq -r '.[0].id')
 
 # Get available realm-management roles
 echo "🔍 Getting available realm-management roles..."
 AVAILABLE_ROLES=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/$REALM_MGMT_UUID/roles")
+    "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/$REALM_MGMT_UUID/roles")
 
 # Get manage-realm, manage-clients, and manage-users roles
 MANAGE_REALM_ROLE=$(echo "$AVAILABLE_ROLES" | jq '.[] | select(.name == "manage-realm")')
@@ -179,7 +192,7 @@ ROLES_TO_ADD="[$MANAGE_REALM_ROLE,$MANAGE_CLIENTS_ROLE,$MANAGE_USERS_ROLE]"
 
 # Get currently assigned client roles
 CURRENT_CLIENT_ROLES=$(curl -s -H "Authorization: Bearer $TOKEN" \
-    "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/users/$SA_USER_ID/role-mappings/clients/$REALM_MGMT_UUID")
+    "${KC_BASE_URL}/admin/realms/${REALM_NAME}/users/$SA_USER_ID/role-mappings/clients/$REALM_MGMT_UUID")
 
 # Check if roles are already assigned
 CURRENT_ROLE_NAMES=$(echo "$CURRENT_CLIENT_ROLES" | jq -r '[.[].name] | sort | join(",")')
@@ -191,7 +204,7 @@ else
     echo "🔑 Assigning realm-management roles..."
 
     ASSIGN_RESPONSE=$(curl -s -X POST \
-        "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/users/$SA_USER_ID/role-mappings/clients/$REALM_MGMT_UUID" \
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/users/$SA_USER_ID/role-mappings/clients/$REALM_MGMT_UUID" \
         -H "Authorization: Bearer $TOKEN" \
         -H "Content-Type: application/json" \
         -d "$ROLES_TO_ADD" \

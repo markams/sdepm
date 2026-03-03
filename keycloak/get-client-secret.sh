@@ -4,33 +4,37 @@ set -euo pipefail
 get_client_secret() {
     # Check required variables
     if [ -z "${KC_BASE_URL:-}" ]; then
-        echo "❌ Error: KC_BASE_URL is not set" >&2
+        echo "❌ Error: KC_BASE_URL is not set (commandline .env* or in pipeline)" >&2
         return 1
     fi
 
-    if [ -z "${KC_APP_REALM:-}" ]; then
-        echo "❌ Error: KC_APP_REALM is not set" >&2
-        return 1
+    if [ -z "${KC_APP_REALM_CONFIG_YAML:-}" ]; then
+        echo "❌ Error: KC_APP_REALM_CONFIG_YAML is not set" >&2; return 1
     fi
+    if [ ! -f "${KC_APP_REALM_CONFIG_YAML}" ]; then
+        echo "❌ Error: KC_APP_REALM_CONFIG_YAML not found: ${KC_APP_REALM_CONFIG_YAML}" >&2; return 1
+    fi
+    local REALM_NAME
+    REALM_NAME=$(yq -r '.config.name' "$KC_APP_REALM_CONFIG_YAML")
 
     if [ -z "${KC_APP_REALM_ADMIN_ID:-}" ]; then
-        echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set" >&2
+        echo "❌ Error: KC_APP_REALM_ADMIN_ID is not set (commandline .env* or in pipeline)" >&2
         return 1
     fi
 
     if [ -z "${KC_APP_REALM_ADMIN_SECRET:-}" ]; then
-        echo "❌ Error: KC_APP_REALM_ADMIN_SECRET is not set" >&2
+        echo "❌ Error: KC_APP_REALM_ADMIN_SECRET is not set (commandline .env* or in pipeline)" >&2
         return 1
     fi
 
     if [ -z "${KC_APP_REALM_CLIENT_ID:-}" ]; then
-        echo "❌ Error: KC_APP_REALM_CLIENT_ID is not set" >&2
+        echo "❌ Error: KC_APP_REALM_CLIENT_ID is not set (commandline .env* or in pipeline)" >&2
         return 1
     fi
 
     echo "🔐 Authenticating with ${KC_APP_REALM_ADMIN_ID}..."
 
-    local TOKEN_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/realms/${KC_APP_REALM}/protocol/openid-connect/token" \
+    local TOKEN_RESPONSE=$(curl -s -X POST "${KC_BASE_URL}/realms/${REALM_NAME}/protocol/openid-connect/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
         -d "client_id=${KC_APP_REALM_ADMIN_ID}" \
         -d "client_secret=${KC_APP_REALM_ADMIN_SECRET}" \
@@ -44,13 +48,13 @@ get_client_secret() {
         echo "" >&2
         echo "Configuration used:" >&2
         echo "  KC_BASE_URL: ${KC_BASE_URL}" >&2
-        echo "  KC_APP_REALM: ${KC_APP_REALM}" >&2
+        echo "  REALM_NAME: ${REALM_NAME}" >&2
         echo "  KC_APP_REALM_ADMIN_ID: ${KC_APP_REALM_ADMIN_ID}" >&2
         echo "  KC_APP_REALM_ADMIN_SECRET: (${#KC_APP_REALM_ADMIN_SECRET} characters)" >&2
         echo "  KC_APP_REALM_CLIENT_ID: ${KC_APP_REALM_CLIENT_ID}" >&2
         echo "" >&2
         echo "💡 Suggestion: KC_APP_REALM_ADMIN_ID and KC_APP_REALM_ADMIN_SECRET should be" >&2
-        echo "   the client_id and client_secret of a service account client (cicd_admin) in realm '${KC_APP_REALM}'" >&2
+        echo "   the client_id and client_secret of a service account client (cicd_admin) in realm '${REALM_NAME}'" >&2
         return 1
     fi
 
@@ -59,7 +63,7 @@ get_client_secret() {
 
     # Get the client UUID
     local CLIENT_CHECK=$(curl -s -H "Authorization: Bearer $TOKEN" \
-        "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients?clientId=${KC_APP_REALM_CLIENT_ID}")
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients?clientId=${KC_APP_REALM_CLIENT_ID}")
 
     if [ "$(echo "$CLIENT_CHECK" | jq 'length')" -eq 0 ]; then
         echo "❌ Client ${KC_APP_REALM_CLIENT_ID} not found" >&2
@@ -72,7 +76,7 @@ get_client_secret() {
     # Retrieve the client secret
     echo "🔑 Retrieving client secret for ${KC_APP_REALM_CLIENT_ID}..."
     local CLIENT_SECRET_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-        "${KC_BASE_URL}/admin/realms/${KC_APP_REALM}/clients/${CLIENT_UUID}/client-secret")
+        "${KC_BASE_URL}/admin/realms/${REALM_NAME}/clients/${CLIENT_UUID}/client-secret")
 
     KC_APP_REALM_CLIENT_SECRET=$(echo "$CLIENT_SECRET_RESPONSE" | jq -r '.value')
 
