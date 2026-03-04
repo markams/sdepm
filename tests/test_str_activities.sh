@@ -261,6 +261,63 @@ fi
 
 echo
 
+# Test 3b: POST with non-existent country code (valid format but not a real ISO code)
+echo "Test 3b: POST with non-existent country code (ZZZ)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+TOTAL_TESTS=$((TOTAL_TESTS + 1))
+
+# Only run if authenticated
+if [ -n "$BEARER_TOKEN" ]; then
+    START_TIME_3B=$(date -u -d "+7 hours" +"%Y-%m-%dT%H:%M:%SZ")
+    END_TIME_3B=$(date -u -d "+8 hours" +"%Y-%m-%dT%H:%M:%SZ")
+
+    read -r -d '' PAYLOAD_BAD_COUNTRY <<EOF || true
+{
+  "url": "http://sdep-test.example.com/amsterdam-bad-country",
+  "registrationNumber": "REGBADCC",
+  "address": {
+    "street": "Prinsengracht",
+    "number": 999,
+    "postalCode": "1016HV",
+    "city": "Amsterdam"
+  },
+  "temporal": {
+    "startDatetime": "$START_TIME_3B",
+    "endDatetime": "$END_TIME_3B"
+  },
+  "areaId": "$AREA_ID_1",
+  "countryOfGuests": ["ZZZ"],
+  "numberOfGuests": 2
+}
+EOF
+
+    response=$(curl -s -w "\n%{http_code}" \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer ${BEARER_TOKEN}" \
+        -d "$PAYLOAD_BAD_COUNTRY" \
+        "${BACKEND_BASE_URL}/api/${API_VERSION}/str/activities")
+
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | sed '$d')
+
+    echo "Response: $body"
+    echo "HTTP Status: $http_code"
+    echo
+
+    if [ "$http_code" -eq 422 ]; then
+        echo "✅ Test 3b passed: Non-existent country code correctly rejected (422)"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+    else
+        echo "❌ Test 3b failed: Expected 422 but got $http_code"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+    fi
+else
+    echo "⏭️  Skipping Test 3b (requires authentication)"
+fi
+
+echo
+
 # Test 4: POST with non-existent area
 echo "Test 4: POST with non-existent area (business logic error)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

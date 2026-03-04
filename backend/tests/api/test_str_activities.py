@@ -668,6 +668,36 @@ class TestSTRActivitiesAPI:
 
         assert response.status_code == 422
 
+    async def test_post_activity_validation_error_country_code_nonexistent(
+        self, async_session: AsyncSession, setup_overrides
+    ):
+        """Test POST /str/activities with valid-format but non-existent country code."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app_v0), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/str/activities",
+                json={
+                    "areaId": "some-area-id",
+                    "url": "http://example.com/test",
+                    "registrationNumber": "REG123",
+                    "address": {
+                        "street": "Main Street",
+                        "number": 123,
+                        "postalCode": "1000AA",
+                        "city": "Amsterdam",
+                    },
+                    "temporal": {
+                        "startDatetime": "2025-06-01T14:00:00Z",
+                        "endDatetime": "2025-06-07T11:00:00Z",
+                    },
+                    "countryOfGuests": ["ZZZ"],
+                },
+                headers={"Authorization": "Bearer test_token"},
+            )
+
+        assert response.status_code == 422
+
     async def test_post_activity_validation_error_start_year_before_2025(
         self, async_session: AsyncSession, setup_overrides
     ):

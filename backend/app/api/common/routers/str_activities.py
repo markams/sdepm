@@ -202,7 +202,7 @@ async def post_activity(
         ),
         registrationNumber=activity_obj.registration_number,
         numberOfGuests=activity_obj.number_of_guests,
-        countryOfGuests=activity_obj.country_of_guests,
+        countryOfGuests=activity_obj.country_of_guests,  # pyright: ignore[reportArgumentType]
         temporal=TemporalResponse(
             startDatetime=activity_obj.temporal_start_date_time,
             endDatetime=activity_obj.temporal_end_date_time,

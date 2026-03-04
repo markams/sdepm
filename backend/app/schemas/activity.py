@@ -14,6 +14,7 @@ from pydantic import (
     field_validator,
     model_serializer,
 )
+from pydantic_extra_types.country import CountryAlpha3
 
 __all__ = [
     "ActivityCountResponse",
@@ -247,32 +248,30 @@ class ActivityRequest(BaseModel):
         examples=[4],
     )  # Attribute
 
-    country_of_guests: list[str] | None = Field(
+    # Uses pydantic-extra-types CountryAlpha3 for ISO 3166-1 alpha-3 validation
+    # against actual country codes (not just format). CountryAlpha3 is a str
+    # subclass, so no serialization or database impact.
+    country_of_guests: list[CountryAlpha3] | None = Field(
         None,
         alias="countryOfGuests",
         max_length=1024,
-        description="Array of country codes of guests (optional, ISO 3166-1 alpha-3: exactly 3 uppercase letters per code, 1-1024 when provided)",
+        description="Array of country codes of guests (optional, validated against ISO 3166-1 alpha-3 country codes, uppercase only, 1-1024 when provided)",
         examples=[["NLD", "DEU", "BEL"]],
     )  # Attribute
 
-    @field_validator("country_of_guests")
+    @field_validator("country_of_guests", mode="before")
     @classmethod
-    def validate_country_codes(cls, v: list[str] | None) -> list[str] | None:
-        """Validate country codes are ISO 3166-1 alpha-3 (exactly 3 uppercase letters)."""
+    def reject_lowercase_country_codes(
+        cls,
+        v: list[str] | None,
+    ) -> list[str] | None:
+        """Reject country codes that are not fully uppercase."""
         if v is None:
             return v
-        if len(v) < 1:
-            raise ValueError(
-                "Country codes list must contain at least 1 item when provided"
-            )
-        for country_code in v:
-            if len(country_code) != 3:
+        for code in v:
+            if isinstance(code, str) and code != code.upper():
                 raise ValueError(
-                    f"Country code '{country_code}' must be exactly 3 characters (ISO 3166-1 alpha-3)"
-                )
-            if not country_code.isupper() or not country_code.isalpha():
-                raise ValueError(
-                    f"Country code '{country_code}' must be uppercase alphabetic characters"
+                    f"Country code '{code}' must be uppercase (ISO 3166-1 alpha-3)"
                 )
         return v
 
@@ -397,7 +396,7 @@ class ActivityResponse(BaseModel):
     number_of_guests: int | None = Field(
         None, alias="numberOfGuests", description="Number of guests (optional)"
     )  # Attribute
-    country_of_guests: list[str] | None = Field(
+    country_of_guests: list[CountryAlpha3] | None = Field(
         None,
         alias="countryOfGuests",
         description="Array of country codes of guests (optional)",
@@ -496,7 +495,7 @@ class ActivityOwnResponse(BaseModel):
     number_of_guests: int | None = Field(
         None, alias="numberOfGuests", description="Number of guests (optional)"
     )
-    country_of_guests: list[str] | None = Field(
+    country_of_guests: list[CountryAlpha3] | None = Field(
         None,
         alias="countryOfGuests",
         description="Array of country codes of guests (optional)",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 260304
+
+- Implemented validation for ISO 3166-1 alpha-3 country code
+
 ## 260303
 
 - Improved Quick start (local workstation) => keycloak config
