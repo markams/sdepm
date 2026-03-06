@@ -89,6 +89,10 @@ SDEP is required by EU legislation.
 
 https://eur-lex.europa.eu/eli/reg/2024/1028/oj/eng
 
+See also the Short Term Rental Application and Prototype Profile.
+
+https://github.com/SEMICeu/STR-AP
+
 ## Main functionality
 
 Ingest and expose:
