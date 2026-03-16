@@ -9,7 +9,8 @@ Overview:
 - [Main functionality](#main-functionality)
 - [Unit tests](#unit-tests)
 - [Integration tests](#integration-tests)
-- [Design](#design)
+- [Functional design](#functional-design)
+- [Technical design](#technical-design)
 - [Process](#process)
 
 ## Reference impl. (production)
@@ -129,11 +130,15 @@ The tests cover the cases as described [here](./tests/README.md).
 
 The tests can also be re-used/run against real deployments (TST, ACC, PRE, PRD; contact SDEP NL for more info).
 
-## Design
+## Functional design
+
+- [Listing and Activity](./docs/LISTING-ACTIVITY.md)
+
+## Technical design
 
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Datamodel](./docs/DATAMODEL.md)
-- [Design log](./docs/DESIGN.md)
+- [Design log](./docs/DESIGN-LOG.md)
 
 ## Process
 
