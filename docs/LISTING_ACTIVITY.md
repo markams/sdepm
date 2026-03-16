@@ -80,18 +80,18 @@ From listing addresses within regulated areas, an **STR** selects a random set a
 
 The table below illustrates the process.
 
-| STR: has listing an STR reg# | Step | Who  | Action                                                                                       | Flag           |
-| ---------------------------- | ---- | ---- | -------------------------------------------------------------------------------------------- | -------------- |
-| Yes                          | 1    | STR  | POST the **reg#** and `areaId` of the listing address to **SDEP**                            |                |
-|                              | 2a   | SDEP | Determine the **reg#** status: OK (present and active in RG), NOK (unkown or expired in RG)  |                |
-|                              | 2b   | SDEP | Determine the **reg#** address as registered in the **RG**                                   |                |
-|                              | 3    | STR  | GET the **reg#** status and the **RG address** from **SDEP**                                 |                |
-|                              | 4    | STR  | Evaluate the returned results                                                                |                |
-|                              | 4a   | STR  | If the **reg#** is Unknown in RG, POST a flagged listing to **SDEP**                         | **RG-UNK**     |
-|                              | 4b   | STR  | If the **reg#** is Expired in RG, POST a flagged listing to **SDEP**                         | **RG-EXP**     |
-|                              | 4c   | STR  | If the **STR address** does not match the **RG address**, POST a flagged listing to **SDEP** | **STR-RG-MSM** |
-| No                           | 5a   | STR  | Detect the non-available **reg#** through an internal check                                  |                |
-|                              | 5b   | STR  | POST a flagged listing to **SDEP**                                                           | **STR-NAV**    |
+| STR: has listing an STR reg# | Step | Who  | Action                                                                                            | Flag           |
+| ---------------------------- | ---- | ---- | ------------------------------------------------------------------------------------------------- | -------------- |
+| Yes                          | 1    | STR  | POST the **reg#** and `areaId` of the listing address to **SDEP**                                 |                |
+|                              | 2a   | SDEP | Determine the **reg#** status: OK (present and active in RG), NOK (unkown or expired in RG)       |                |
+|                              | 2b   | SDEP | Determine the **reg#** address as registered in the **RG**                                        |                |
+|                              | 3    | STR  | GET the **reg#** status and the **RG address** from **SDEP**                                      |                |
+|                              | 4    | STR  | Evaluate the returned results                                                                     |                |
+|                              | 4a   | STR  | If the **reg#** is Unknown in RG, POST a flagged listing to **SDEP**                              | **RG-UNK**     |
+|                              | 4b   | STR  | If the **reg#** is Expired in RG, POST a flagged listing to **SDEP**                              | **RG-EXP**     |
+|                              | 4c   | STR  | If the **STR address** and the **RG address** have a Mismatch, POST a flagged listing to **SDEP** | **STR-RG-MSM** |
+| No                           | 5a   | STR  | Detect the non-available **reg#** through an internal check                                       |                |
+|                              | 5b   | STR  | POST a flagged listing to **SDEP**                                                                | **STR-NAV**    |
 
 To conclude, the STR thus covers the following checks and reporting:
 
