@@ -100,8 +100,8 @@ Ingest and expose:
 
 - To **ingest regulated areas** from competent authorities (CA)
 - To **expose regulated areas** to short-term rental platforms (STR)
-- To **ingest rental activities** from short-term rental platforms
-- To **expose rental activities** to competent authorities and other stakeholders
+- To **ingest rental activities** from short-term rental platforms (STR)
+- To **expose rental activities** to competent authorities (CA) and other stakeholders
 
 ## Unit tests
 

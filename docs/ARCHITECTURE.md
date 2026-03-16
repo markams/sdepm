@@ -156,7 +156,7 @@ sdep-app/
 │   ├── test_str_areas.sh                   # Test STR area query endpoints
 │   └── README.md                           # Test documentation
 │
-├── keycloak/                               # Keycloak configuration
+├── keycloak/                               # Keycloak config
 │   ├── add-realm-admin.sh                  # Create realm admin user
 │   ├── add-realm-machine-clients.sh        # Configure OAuth2 machine clients
 │   ├── add-realm-roles.sh                  # Configure roles
