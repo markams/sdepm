@@ -16,12 +16,13 @@ Although for random checks only listings apply, this document covers both listin
   - [Registration](#registration)
   - [Reporting](#reporting)
   - [Enforcement](#enforcement)
-  - [Supervision](#supervision)
+  - [Monitoring](#monitoring)
 - [Activity regulation](#activity-regulation)
   - [Reporting](#reporting-1)
   - [Enforcement](#enforcement-1)
-  - [Supervision](#supervision-1)
+  - [Monitoring](#monitoring-1)
 - [Design notes](#design-notes)
+  - [RG adress](#rg-adress)
   - [Asynchronous](#asynchronous)
   - [Area - CA - RG](#area-ca-rg)
   - [Unit](#unit)
@@ -63,61 +64,59 @@ The main regulatory functions are:
 - Registration
 - Reporting
 - Enforcement
-- Supervision
+- Monitoring
 
 ### Registration
 
-The listing address must be assigned a registration number (**reg#**) in a registration registry (**RG**).
+If a listing address is located within a regulated area, the listing host must get a registration number (**reg#**) for the listing address in a registration registry (**RG**).
 
 This process is outside the scope of **SDEP**.
 
 ### Reporting
 
-An **STR** randomly selects a set of listings, checks the listing address and **reg#**, performs the required actions, and reports the results. This process is referred to as **random checks**.
+From listing addresses within regulated areas, an **STR** selects a random set and performs actions. This process is referred to as **random checks**
 
-Reporting covers the following checks:
+**European Commission prerequisite:** The evaluation process described below is the responsibility of STR platforms, not SDEP.
 
-- **Completeness**: whether a **reg#** is defined in the **STR**
-- **Existence**: whether the **reg#** provided by the **STR** exists in the **RG**
-- **Validity**: whether the **reg#** in the **RG** is active and not expired
-- **Correctness**: whether, for a given **reg#**, the **RG** address matches the **STR** address
+The table below illustrates the process.
 
-The table below illustrates the reporting process.
+| STR: has listing an STR reg# | Step | Who  | Action                                                                                                 | Flag           |
+| ---------------------------- | ---- | ---- | ------------------------------------------------------------------------------------------------------ | -------------- |
+| Yes                          | 1    | STR  | POST the **reg#** and `areaId` of the listing address to **SDEP**                                      |                |
+|                              | 2a   | SDEP | Determine the **reg#** status: OK (present and active in RG), NOK (unkown or expired in RG)            |                |
+|                              | 2b   | SDEP | Determine the **reg#** address as registered in the **RG**                                             |                |
+|                              | 3    | STR  | GET the **reg#** status and the **RG address** from **SDEP**                                           |                |
+|                              | 4    | STR  | Evaluate the returned results                                                                          |                |
+|                              | 4a   | STR  | If the **reg#** is Unknown in RG, POST a flagged listing to **SDEP**                                   | **RG-UNK**     |
+|                              | 4b   | STR  | If the **reg#** is Expired in RG, POST a flagged listing to **SDEP**                                   | **RG-EXP**     |
+|                              | 4c   | STR  | If the **RG address-hash** does not match the **STR address-hash**, POST a flagged listing to **SDEP** | **STR-RG-MSM** |
+| No                           | 5a   | STR  | Detect the non-available **reg#** through an internal check                                            |                |
+|                              | 5b   | STR  | POST a flagged listing to **SDEP**                                                                     | **STR-NAV**    |
 
-| Listing in Area | Has reg# | Step | Who  | Action                                                                                                 | Flag        |
-| --------------- | -------- | ---- | ---- | ------------------------------------------------------------------------------------------------------ | ----------- |
-| Yes             | Yes      | 1    | STR  | POST the **reg#** and `areaId` of the listing address to **SDEP**                                      |             |
-|                 |          | 2a   | SDEP | Determine the **reg#** status: OK / Missing in RG / Expired in RG                                      |             |
-|                 |          | 2b   | SDEP | Map the **reg#** to a **RG address-hash** (that is, the address as registered in the **RG**)           |             |
-|                 |          | 3    | STR  | GET the **reg#** status and **RG address-hash** from **SDEP**                                          |             |
-|                 |          | 4    | STR  | Evaluate the returned results                                                                          |             |
-|                 |          | 4a   | STR  | If the **reg#** is Missing in RG, POST a flagged listing to **SDEP**                                   | **MIS-RG**  |
-|                 |          | 4b   | STR  | If the **reg#** is Expired in RG, POST a flagged listing to **SDEP**                                   | **EXP-RG**  |
-|                 |          | 4c   | STR  | If the **RG address-hash** does not match the **STR address-hash**, POST a flagged listing to **SDEP** | **MISMA**    |
-| Yes             | No       | 5a   | STR  | Detect a missing **reg#** through an internal check                                                    |             |
-|                 |          | 5b   | STR  | If the **reg#** is missing in the **STR**, POST a flagged listing to **SDEP**                          | **MIS-STR** |
-| No              | Yes      | 6    | STR  | Detect through an internal check that the listing is outside the scope of **SDEP**                     |             |
-| No              | No       | 7    | STR  | Detect through an internal check that the listing is outside the scope of **SDEP**                     |             |
+To conclude, the STR thus covers the following checks and reporting:
 
-The address match uses an address-hash rather than the full address data, based on the security principle of “need to know”.
+- **Existence**: whether the **reg#** provided by the **STR** is known in the **RG** (RG-UNK)
+- **Validity**: whether the **reg#** in the **RG** is active and not expired (RG-EXP)
+- **Correctness**: whether, for a given **reg#**, the **STR** address matches the **RG** address (STR-RG-MSM)
+- **Completeness**: whether a **reg#** is defined in the **STR** (STR-NAV)
 
 ### Enforcement
 
 An **STR** informs the listing owner (host) when any of the above flags applies.
 
-### Supervision
+### Monitoring
 
-A **listing supervisor** (**LSR**) determines whether an **STR** complies with listing regulation.
+A **listing monitoring authority** (**LMA**) determines whether an **STR** complies with listing regulation.
 
 Minimum information required:
 
 - The number of flagged listings for the **STR**, as available from **SDEP**
 
-Additional information may be required, depending on the **LSR**.
+Additional information may be required, depending on the **LMA**.
 
-For example, an **LSR** may need to determine whether the random selection was in fact random.
+For example, an **LMA** may need to determine whether the random selection was in fact random.
 
-In the Netherlands, the **LSR** is the Autoriteit Consument & Markt (**ACM**).
+In the Netherlands, the **LMA** is the Autoriteit Consument & Markt (**ACM**).
 
 <div style="page-break-after: always"></div>
 
@@ -129,7 +128,7 @@ The main regulatory functions are:
 
 - Reporting
 - Enforcement
-- Supervision
+- Monitoring
 
 ### Reporting
 
@@ -148,21 +147,41 @@ A **Competent Authority** (**CA**) retrieves activities from **SDEP** in order t
 
 The enforcement process is outside the scope of **SDEP**. For example, CA may assess whether the number of activities is less than or equal to the maximum number of allowed lettings within a given period.
 
-### Supervision
+### Monitoring
 
-An **activity supervisor** (**ASR**) determines whether an **STR** complies with activity regulation.
+An **activity monitoring authority** (**AMA**) determines whether an **STR** complies with activity regulation.
 
 Minimum information required:
 
 - The number of activities for the **STR**, as available from **SDEP**
 
-Additional information may be required, depending on the **ASR**.
+Additional information may be required, depending on the **AMA**.
 
-In The Netherlands, the **ASR** is the Inspectie Leefomgeving en Transport (**ILT**).
+In The Netherlands, the **AMA** is the Inspectie Leefomgeving en Transport (**ILT**).
 
 <div style="page-break-after: always"></div>
 
 ## Design notes
+
+### RG adress
+
+On returning the RG adress.
+
+**Prerequisite:** Integration partners (**STR platforms** and **Competent Authorities (CA)**) are trusted entities.
+
+- This trust may be established through a **separate identification process** (e.g., national coordination mechanisms)
+- Cf. the process for acquiring **organization-validated certificates** from a trusted service provider
+
+**Address fields:** All address fields are optional to remain **member-state agnostic**.
+
+- Each Member State decides how a platform can **match the STR-provided address with the RG address**.
+- For example, in Belgium, a single **postal code may correspond to multiple addresses**.
+
+**Rejected approach:** Returning an **address hash** instead of the full address data (based on the security principle *“need to know”*)
+
+- **Limited security benefit:** A malicious STR could still derive the **registration number / RG address** by hashing all publicly available addresses
+- **Error-prone:** Minor formatting differences may result in different hashes (e.g., `"Example Street"` vs. `"Example St."`)
+- **Operational overhead:** It would introduce additional **key management and maintenance complexity**
 
 ### Asynchronous
 
