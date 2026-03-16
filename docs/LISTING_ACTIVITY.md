@@ -89,7 +89,7 @@ The table below illustrates the process.
 |                              | 4    | STR  | Evaluate the returned results                                                                          |                |
 |                              | 4a   | STR  | If the **reg#** is Unknown in RG, POST a flagged listing to **SDEP**                                   | **RG-UNK**     |
 |                              | 4b   | STR  | If the **reg#** is Expired in RG, POST a flagged listing to **SDEP**                                   | **RG-EXP**     |
-|                              | 4c   | STR  | If the **RG address-hash** does not match the **STR address-hash**, POST a flagged listing to **SDEP** | **STR-RG-MSM** |
+|                              | 4c   | STR  | If the **RG address** does not match the **STR address**, POST a flagged listing to **SDEP** | **STR-RG-MSM** |
 | No                           | 5a   | STR  | Detect the non-available **reg#** through an internal check                                            |                |
 |                              | 5b   | STR  | POST a flagged listing to **SDEP**                                                                     | **STR-NAV**    |
 
