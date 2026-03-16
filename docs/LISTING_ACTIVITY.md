@@ -104,6 +104,10 @@ To conclude, the STR thus covers the following checks and reporting:
 
 An **STR** informs the listing owner (host) when any of the above flags applies.
 
+A **CA** retrieves flagged listings from SDEP in order to enforce regulation.
+
+This enforcement process is outside the scope of SDEP.
+
 ### Monitoring
 
 A **listing monitoring authority** (**LMA**) determines whether an **STR** complies with listing regulation.
