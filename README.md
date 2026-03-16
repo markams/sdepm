@@ -2,8 +2,8 @@
 
 Overview:
 
-- [Reference impl. (production)](#reference-impl-production)
-- [Quick start (pre-production)](#quick-start-pre-production)
+- [Reference Implementation (Production)](#reference-implementation-production)
+- [Quick Start (Pre-Production)](#quick-start-pre-production)
 - [Quick start (local workstation)](#quick-start-local-workstation)
 - [Background](#background)
 - [Main functionality](#main-functionality)
@@ -13,25 +13,26 @@ Overview:
 - [Technical design](#technical-design)
 - [Process](#process)
 
-## Reference impl. (production)
+## Reference Implementation (Production)
 
-The reference impl. for this repo is SDEP Netherlands:
+The reference implementation for this repository is **SDEP Netherlands**.
 
-https://sdep.gov.nl/api/v0/docs
+**Production environment (PRD):** https://sdep.gov.nl/api/v0/docs
 
-DISCLAIMER - the API is yet subject to change (without versioning).
+> **Disclaimer**
+> The API is currently subject to change and may be updated **without versioning**.
 
-## Quick start (pre-production)
+## Quick Start (Pre-Production)
 
-The reference impl. is also running in pre-production.
+The reference implementation is also available in a **pre-production environment**, allowing **integration partners** to test their integrations with SDEP.
 
-To request **test accounts**, please reach out via email. For contact details, visit:
+ **Pre-production environment (PRE):** https://pre-sdep.minvro.nl/api/v0/docs
 
-https://pre-sdep.minvro.nl/api/v0/docs
+To get started, see: [PRE](./docs/PRE.md).
 
 ## Quick start (local workstation)
 
-The reference impl. can also be run **fullstack** on a local workstation.
+The reference implementation can also be run **fullstack** on a local workstation.
 
 *Tested on Linux; for Windows, consider using WSL.*
 
@@ -96,12 +97,16 @@ https://github.com/SEMICeu/STR-AP
 
 ## Main functionality
 
-Ingest and expose:
+In accordance with EU legislation, SDEP enables the following:
 
-- To **ingest regulated areas** from competent authorities (CA)
-- To **expose regulated areas** to short-term rental platforms (STR)
-- To **ingest rental activities** from short-term rental platforms (STR)
-- To **expose rental activities** to competent authorities (CA) and other stakeholders
+- **Ingest regulated areas** from competent authorities (CA)
+- **Provide regulated areas** to short-term rental platforms (STR)
+- **Ingest rental activity data** from short-term rental platforms (STR)
+- **Provide rental activity data** to competent authorities (CA) and other stakeholders
+- **Ingest flagged listings** from short-term rental platforms (STR)
+- **Provide flagged listings** to relevant stakeholders
+
+*Support for flagged listings is currently under development.*
 
 ## Unit tests
 
@@ -132,13 +137,13 @@ The tests can also be re-used/run against real deployments (TST, ACC, PRE, PRD; 
 
 ## Functional design
 
-- [Listing and Activity](./docs/LISTING-ACTIVITY.md)
+- [Listing and Activity](./docs/LISTING_ACTIVITY.md)
 
 ## Technical design
 
 - [Architecture](./docs/ARCHITECTURE.md)
 - [Datamodel](./docs/DATAMODEL.md)
-- [Design log](./docs/DESIGN-LOG.md)
+- [Design log](./docs/DESIGN_LOG.md)
 
 ## Process
 
