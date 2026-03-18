@@ -256,6 +256,8 @@ The RR delivers a reg# address to SDEP.
 
 - An STR gets the address from SDEP and performs a match.
 
+Discuss: need to know / personal data.
+
 **Prerequisite:** Integration partners (**STR platforms** and **Competent Authorities (CA)**) are trusted entities.
 
 - This trust may be established through a **separate identification process** (e.g., national coordination mechanisms)
