@@ -99,16 +99,16 @@ An authority responsible for monitoring compliance with activity regulations.
 
 When a host has created a listing on the STR platform, and the listing’s address falls within a regulated area, then following regulatory actions apply:
 
-| Actor    | Action                    | Detail                                                                                               |
-| -------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Host** | **Register in RR**        | Registrate the listing address and obtain a **reg#**                                                 |
-| **Host** | **Self-declare on STR**   | "I have knowledge of the regulated area"                                                             |
-| **STR**  | **Reportg (1/3) to SDEP** | Supply a random set of listing reg# (**random checks**)                                              |
-| **RR**   | **Report (2/3) to SDEP**: | Evaluate and inform about RR reg# status and RR reg# address                                         |
-| **STR**  | **Report (3/3) to SDEP**: | Flag the listing with STR reg# status (after evaluating RR reg# status and STR/RR address match) [1] |
-| **STR**  | **Inform** the host       | When NOK                                                                                             |
-| **CA**   | **Enforce** the host      | On regulation                                                                                        |
-| **LMA**  | **Monitor** the process   | At least the #reported flagged listings                                                              |
+| Actor    | Action                   | Detail                                                                                               |
+| -------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Host** | **Register** in RR       | Registrate the listing address and obtain a **reg#**                                                 |
+| **Host** | **Self-declare** on STR  | "I have knowledge of the regulated area"                                                             |
+| **STR**  | **Report** (1/3) to SDEP | Supply a random set of listing reg# (**random checks**)                                              |
+| **RR**   | **Report** (2/3) to SDEP | Evaluate and inform about RR reg# status and RR reg# address                                         |
+| **STR**  | **Report** (3/3) to SDEP | Flag the listing with STR reg# status (after evaluating RR reg# status and STR/RR address match) [1] |
+| **STR**  | **Inform** the host      | When NOK                                                                                             |
+| **CA**   | **Enforce** the host     | On regulation                                                                                        |
+| **LMA**  | **Monitor** the process  | At least the #reported flagged listings                                                              |
 
 [1] Can SDEP wipe the RR-info within this transaction?
 
@@ -188,11 +188,11 @@ In the Netherlands, the **LMA** is the Autoriteit Consument & Markt (**ACM**).
 
 If an activity address falls within a regulated area, then following regulatory actions apply:
 
-| Actor   | Action                             | Detail                            |
-| ------- | ---------------------------------- | --------------------------------- |
-| **STR** | **Report** activity                |                                   |
-| **CA**  | **Enforce** the host on regulation |                                   |
-| **AMA** | **Monitor** the process            | At least the #reported activities |
+| Actor   | Action                  | Detail                            |
+| ------- | ----------------------- | --------------------------------- |
+| **STR** | **Report** activity     |                                   |
+| **CA**  | **Enforce** the host    | On regulation                     |
+| **AMA** | **Monitor** the process | At least the #reported activities |
 
 **Actor dependencies** are illustrated in the following diagram:
 
