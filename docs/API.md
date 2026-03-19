@@ -30,7 +30,7 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 | **API&nbsp;12** | Logical ordering => readability                    | For POST, request and response follow the same ordering, extra data in response is moved to the end                           |
 | **API&nbsp;13** | Essentiality                                       | Example: in POST activities, only `areaId` and `competentAuthorityId`, but no `competentAuthorityName`                        |
 | **API&nbsp;14** | Essentiality/security                              | Example: in POST activities request, no need to include `platformId`                                                          |
-| **API&nbsp;15** | Consistent HTTP response codes                     | See [HTTP status codes](#http-status-codes) below                                                                              |
+| **API&nbsp;15** | Consistent HTTP response codes                     | See [HTTP status codes](#http-status-codes) below                                                                             |
 | **API&nbsp;16** | STR and CA: manage area change                     | Areas may change over time, SDEP only administrates the changes and exposes the latest "truth"                                |
 
 ---
@@ -39,27 +39,27 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 
 ### Success
 
-| HTTP Status | Meaning        | When                                                         |
-| ----------- | -------------- | ------------------------------------------------------------ |
-| 200         | OK             | GET request completed successfully                           |
-| 201         | Created        | POST request created a new resource                          |
-| 204         | No Content     | DELETE request completed successfully (e.g. deactivate area) |
+| HTTP Status | Meaning    | When                                                         |
+| ----------- | ---------- | ------------------------------------------------------------ |
+| 200         | OK         | GET request completed successfully                           |
+| 201         | Created    | POST request created a new resource                          |
+| 204         | No Content | DELETE request completed successfully (e.g. deactivate area) |
 
 ### Client errors
 
 | HTTP Status | Meaning               | When                                                                                                                          |
 | ----------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 400         | Bad Request           | Invalid query parameters on a GET request (e.g. `offset=-1` or `limit=abc`), or missing client credentials                   |
-| 401         | Unauthorized          | Missing, invalid, or expired authentication token; missing required token claims (`client_id`, `client_name`)                |
-| 403         | Forbidden             | Authenticated but missing a required role (`sdep_ca`, `sdep_str`, `sdep_read`, `sdep_write`)                                 |
-| 404         | Not Found             | Requested resource does not exist, is unavailable, or has been deleted                                                       |
-| 409         | Conflict              | Duplicate resource (unique constraint violation)                                                                             |
+| 400         | Bad Request           | Invalid query parameters on a GET request (e.g. `offset=-1` or `limit=abc`), or missing client credentials                    |
+| 401         | Unauthorized          | Missing, invalid, or expired authentication token; missing required token claims (`client_id`, `client_name`)                 |
+| 403         | Forbidden             | Authenticated but missing a required role (`sdep_ca`, `sdep_str`, `sdep_read`, `sdep_write`)                                  |
+| 404         | Not Found             | Requested resource does not exist, is unavailable, or has been deleted                                                        |
+| 409         | Conflict              | Duplicate resource (unique constraint violation)                                                                              |
 | 422         | Unprocessable Content | Invalid request body on a POST request (e.g. missing required field), or business rule violation (e.g. start time > end time) |
 
 ### Server errors
 
-| HTTP Status | Meaning               | When                                                                    |
-| ----------- | --------------------- | ----------------------------------------------------------------------- |
+| HTTP Status | Meaning               | When                                                                   |
+| ----------- | --------------------- | ---------------------------------------------------------------------- |
 | 500         | Internal Server Error | Unexpected condition that prevented fulfilling the request (catch-all) |
 | 503         | Service Unavailable   | Database or authorization server (Keycloak) temporarily unavailable    |
 
