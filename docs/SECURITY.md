@@ -128,6 +128,8 @@ In short: `delete_old_audit_logs` does the actual work; `audit_log_cleanup_loop`
 
 ### Roadmap
 
+Outside scope of app, but consider for deployment:
+
 - Restricted RBAC for viewing audit logs (admin-only API endpoint)
 - Role/permissions audit: log which permissions were evaluated
 - Hash/sign the audit streams for tamper detection
