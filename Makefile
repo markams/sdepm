@@ -4,7 +4,7 @@ SHELL := /bin/bash
         postgres-clean postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
         .keycloak-wait .keycloak-realm .keycloak-admin .keycloak-roles .keycloak-machine-clients .get-client-credentials \
         .clean-testrun test-security test-str test-ca \
-        postgres-login postgres-status postgres-full dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
+        postgres-login postgres-status postgres-auditlog postgres-full dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
         backend-logs postgres-logs keycloak-logs
 
 .DEFAULT_GOAL := help
@@ -134,6 +134,11 @@ postgres-status: ## Show postgres tables (SDEP)
 			docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema='public' AND table_name='$$table' ORDER BY ordinal_position"; \
 		fi; \
 	done
+
+postgres-auditlog: ## Show SDEP audit log
+	@set -a && source .env && set +a && \
+	echo "Showing audit log for database $$POSTGRES_DB_NAME..." && \
+	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT timestamp, client_id, client_name, roles, client_ip, action, http_method, status_code FROM audit_log"
 
 postgres-full: postgres-status ## Show postgres tables with full details (SDEP)
 	@echo ""

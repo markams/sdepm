@@ -15,7 +15,17 @@ BATCH_SIZE = 1000
 
 
 async def delete_old_audit_logs(retention_days: int) -> int:
-    """Delete audit log rows older than *retention_days*. Returns total rows deleted."""
+    """One-shot deletion of all audit log rows older than *retention_days*.
+
+    Deletes in batches of BATCH_SIZE to avoid long-running transactions and
+    excessive lock contention. Each batch runs in its own transaction.
+
+    This is a pure coroutine that runs to completion and returns — it does not
+    loop or sleep. It can be called standalone (e.g. in scripts, tests, or
+    one-off maintenance) or by ``audit_log_cleanup_loop`` for recurring use.
+
+    Returns the total number of rows deleted.
+    """
     cutoff = datetime.now(UTC) - timedelta(days=retention_days)
     total_deleted = 0
 
@@ -40,7 +50,16 @@ async def delete_old_audit_logs(retention_days: int) -> int:
 async def audit_log_cleanup_loop(
     retention_days: int, interval_seconds: float = 3600.0
 ) -> None:
-    """Periodically delete expired audit log rows. Runs until cancelled."""
+    """Infinite scheduling loop that periodically purges expired audit rows.
+
+    On each cycle, calls ``delete_old_audit_logs`` to do the actual deletion,
+    then sleeps for *interval_seconds* (default 3 600 s = 1 hour).
+
+    Exceptions in a single cycle are caught and logged so the loop keeps
+    running. The loop itself runs until the enclosing ``asyncio.Task`` is
+    cancelled — which happens during FastAPI shutdown via the ``lifespan``
+    context manager in ``main.py``.
+    """
     while True:
         try:
             deleted = await delete_old_audit_logs(retention_days)

@@ -391,7 +391,9 @@ POST endpoints use `get_async_db` which wraps the entire request in a single tra
 
 ## Exception Handling
 
-All exceptions are handled by global exception handlers defined in `app/exceptions/handlers.py` and registered in `app/api/common/exception_handlers.py`:
+All exceptions are handled by global exception handlers defined in `app/exceptions/handlers.py` and registered in `app/api/common/exception_handlers.py`. For the complete list of HTTP status codes used by the API, see [HTTP status codes](API.md#http-status-codes).
+
+The table below shows how application exceptions map to HTTP status codes:
 
 | HTTP Status                 | Exception                             | Description                                                                                                   |
 | --------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -407,13 +409,6 @@ All exceptions are handled by global exception handlers defined in `app/exceptio
 | 500                         | `Exception`                           | Catch-all (unexpected code failure)                                                                           |
 | 503                         | `DatabaseOperationalError`            | Database temporarily unavailable                                                                              |
 | 503                         | `AuthorizationServerOperationalError` | Authorization server temporarily unavailable                                                                  |
-
-Additional infrastructure errors (not handled by application exceptions):
-
-| HTTP Status | Description                                                                                                        |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| 500         | Internal server error (unexpected condition that prevented fulfilling a request) |
-| 503         | currently unable to handle requests (overload, maintenance, or experiencing a temporary breakdown) |
 
 ---
 
