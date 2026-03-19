@@ -1,4 +1,4 @@
-<h1>Design log</h1>
+<h1>API</h1>
 
 In general, **keep the API as simple and concise as possible**.
 
@@ -10,12 +10,9 @@ In general, **keep the API as simple and concise as possible**.
 
 https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 
-<h2>Table of Contents</h2>
+---
 
-- [API](#api)
-- [Security](#security)
-
-## API
+## Patterns
 
 | #               | Decision                                           | Motivation/example                                                                                                            |
 | :-------------- | :------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
@@ -35,10 +32,3 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 | **API&nbsp;14** | Essentiality/security                              | Example: in POST activities request, no need to include `platformId`                                                          |
 | **API&nbsp;15** | Consistent HTTP response codes                     | 200, 201, 400, 401, 403, 409, 422                                                                                             |
 | **API&nbsp;16** | STR and CA: manage area change                     | Areas may change over time, SDEP only administrates the changes and exposes the latest "truth"                                |
-
-## Security
-
-| #               | Decision                                                       | Motivation/example                                                                                                           |
-| :-------------- | :------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------- |
-| **SEC&nbsp;01** | oAuth2 with JWT                                                | Is the standard for trusted machine-to-machine (M2M) interaction - https://datatracker.ietf.org/doc/html/rfc6749#section-4.4 |
-| **SEC&nbsp;02** | Smaller platforms can delegate API-invocation to third-parties | Platform arranges data submission with their party; the party becomes registered in SDEP                                     |

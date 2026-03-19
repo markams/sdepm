@@ -1,21 +1,20 @@
-<h1>Data Model</h1>
+<h1>Internal Data Model</h1>
 
-The class model on this page represents the SDEP **internal view** (implementation).
+This page explains the SDEP **internal data model** (implementation).
 
-The OpenAPI/Swagger API docs expose this model as the **external view**.
-
-**API clients** should ONLY look at the **external view.** \
+**API clients** should ONLY look at the **external data model** (OpenAPI). \
 https://sdep.gov.nl/api/v0/docs
 
 <h2>Table of Contents</h2>
 
-- [Classes (internal view)](#classes-internal-view)
+- [Data model](#data-model)
   - [Competent Authority](#competent-authority)
   - [Platform](#platform)
   - [Area](#area)
   - [Activity](#activity)
   - [Address (Composite)](#address-composite)
   - [Temporal (Composite)](#temporal-composite)
+  - [AuditLog](#auditlog)
 - [Key Patterns](#key-patterns)
   - [OLTP](#oltp)
   - [ID Management](#id-management)
@@ -23,20 +22,24 @@ https://sdep.gov.nl/api/v0/docs
   - [Soft-Delete](#soft-delete)
   - [Lazy load](#lazy-load)
 
-## Classes (internal view)
+## Data model
 
-![](./DATAMODEL.svg)
+Overview:
 
-- **CompetentAuthority** defines many **Areas** (demanding regulation)
-- **Platform** submits many **Activities** (subject to regulation)
-- **Activity** references one **Area** (subject to regulation)
-- **Activity** embeds one **Address** (rental location)
-- **Activity** embeds one **Temporal** (rental time period)
+- A **CompetentAuthority** regulates geographical **Areas** (typically one)
+- A **Platform** submits rental **Activities** (subject to regulation)
+- An **Activity** is regulated in an **Area**
+- An **Activity** is located on an **Address** (rental location)
+- An **Activity** happens during a **Temporal** (rental time period)
 - Activities are routed to CompetentAuthorities based on the referenced Area
+
+Diagram:
+
+![](./diagrams/DATAMODEL.svg)
 
 ### Competent Authority
 
-**Purpose:** Regulates short-term rental in required geographic areas
+**Purpose:** Regulates short-term rental in geographic areas
 
 | Attribute                  | Type      | Constraints                                                                                           |
 | :------------------------- | :-------- | :---------------------------------------------------------------------------------------------------- |
@@ -156,6 +159,38 @@ https://sdep.gov.nl/api/v0/docs
 **Class Constraints:**
 
 - CHECK (startDatetime < endDatetime)
+
+### AuditLog
+
+**Purpose:** Append-only log of API requests for compliance, security monitoring, and operational accountability
+
+| Attribute        | Type     | Constraints                                              |
+| :--------------- | :------- | :------------------------------------------------------- |
+| **id**           | int      | is technical id, mandatory                               |
+| **timestamp**    | datetime | mandatory, UTC, server default now()                     |
+| **requestId**    | string   | mandatory, UUID4, length <= 64                           |
+| **clientId**     | string   | nullable, length <= 64, from JWT client_id               |
+| **clientName**   | string   | nullable, length <= 64, from JWT client_name             |
+| **roles**        | string   | nullable, length <= 256, comma-separated                 |
+| **action**       | string   | mandatory, length <= 64, semantic action name            |
+| **resourceType** | string   | nullable, length <= 32                                   |
+| **resourceId**   | string   | nullable, length <= 64                                   |
+| **httpMethod**   | string   | mandatory, length <= 10                                  |
+| **path**         | string   | mandatory, length <= 512                                 |
+| **queryParams**  | string   | nullable, length <= 512                                  |
+| **statusCode**   | int      | mandatory                                                |
+| **success**      | bool     | mandatory                                                |
+| **clientIp**     | string   | nullable, length <= 45                                   |
+| **userAgent**    | string   | nullable, length <= 256                                  |
+| **durationMs**   | int      | nullable                                                 |
+
+**Notes:**
+- Append-only: no updates or deletes (except automated retention cleanup)
+- Standalone table with no foreign key relationships
+- Indexes on: `timestamp`, `request_id`, `client_id`
+- **Retention:** rows older than `AUDITLOG_RETENTION` days (default 1) are automatically deleted by a background task
+
+---
 
 ## Key Patterns
 

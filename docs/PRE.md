@@ -19,6 +19,8 @@ As an integration partner, you can request **test accounts for SDEP-NL**.
 > For **production use** in your country, please contact your **country-specific SDEP representative** regarding the SDEP deployment in your country.
 >
 
+---
+
 ## Background
 
 In accordance with **EU legislation**, SDEP enables the following:
@@ -41,8 +43,9 @@ SDEP currently supports two roles:
 
 > *Support for monitoring authorities is currently under development.*
 
+---
 
-## Your Action
+## Call for action
 
 Test accounts represent **client machines** operating under either the **STR** or **CA** role. \
 These accounts allow you to **test all supported SDEP use cases**.

@@ -36,11 +36,17 @@ The reference implementation can also be run **fullstack** on a local workstatio
 
 *Tested on Linux; for Windows, consider using WSL.*
 
-**Pre-requistes**
+**Prerequisites**
 
-- Docker installed
-- "jq" and "yq" installed
-- "make" installed
+Required:
+
+- Docker
+- "jq" and "yq"
+- "make"
+
+Optional:
+
+- DBGate
 
 **Clone this repo**
 
@@ -142,8 +148,9 @@ The tests can also be re-used/run against real deployments (TST, ACC, PRE, PRD; 
 ## Technical design
 
 - [Architecture](./docs/ARCHITECTURE.md)
-- [Datamodel](./docs/DATAMODEL.md)
-- [Design log](./docs/DESIGN_LOG.md)
+- [Internal datamodel](./docs/DATAMODEL.md)
+- [API](./docs/API.md)
+- [Security](./docs/SECURITY.md)
 
 ## Process
 

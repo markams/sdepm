@@ -3,7 +3,11 @@
 This module provides:
 - Bearer token authentication (JWT validation)
 - Security headers middleware for OWASP compliance
+- Audit log middleware for request tracking
 """
+
+# Import audit log middleware
+from app.security.audit import AuditLogMiddleware
 
 # Import bearer token authentication for backwards compatibility
 from app.security.bearer import (
@@ -22,6 +26,7 @@ from app.security.headers import (
 
 __all__ = [
     "ApiSecurityHeadersMiddleware",
+    "AuditLogMiddleware",
     "SecurityHeadersMiddleware",
     "create_verify_bearer_token",
     "get_keycloak_public_key",

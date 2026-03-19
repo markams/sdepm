@@ -1,14 +1,31 @@
 """Single Digital Entrypoint"""
 
+import asyncio
+import contextlib
+from collections.abc import AsyncIterator
+
 from fastapi import FastAPI
 
 from app.api.common.exception_handlers import register_exception_handlers
 from app.api.common_app import app_common
 from app.api.v0 import app_v0
-from app.security import SecurityHeadersMiddleware
+from app.config import settings
+from app.security import AuditLogMiddleware, SecurityHeadersMiddleware
+from app.security.audit_retention import audit_log_cleanup_loop
+
+
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Manage background tasks tied to the application lifecycle."""
+    task = asyncio.create_task(audit_log_cleanup_loop(settings.AUDITLOG_RETENTION))
+    yield
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+
 
 # Create FastAPI application instance
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 # ============================================================================
 # EXCEPTION HANDLERS
@@ -33,6 +50,11 @@ register_exception_handlers(app)
 # - base-uri 'self': Restrict <base> tag URLs
 # - object-src 'none': Block <object>, <embed>, <applet>
 # - form-action 'self': Restrict form submission targets
+# Add audit log middleware for request tracking
+# Starlette LIFO: last added = outermost = runs first
+# AuditLogMiddleware runs after SecurityHeadersMiddleware (added after = runs inside)
+app.add_middleware(AuditLogMiddleware)
+
 app.add_middleware(
     SecurityHeadersMiddleware,
     enable_csp=True,

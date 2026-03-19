@@ -4,10 +4,13 @@ SHELL := /bin/bash
         postgres-clean postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
         .keycloak-wait .keycloak-realm .keycloak-admin .keycloak-roles .keycloak-machine-clients .get-client-credentials \
         .clean-testrun test-security test-str test-ca \
-        postgres-login postgres-status postgres-full \
+        postgres-login postgres-status postgres-full dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
         backend-logs postgres-logs keycloak-logs
 
 .DEFAULT_GOAL := help
+
+DBGATE_PID_FILE := /tmp/dbgate.pid
+DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86_64\.AppImage
 
 # Helpers
 
@@ -171,6 +174,95 @@ postgres-load: ## Load test data
 
 postgres-logs: ## Show postgres logs
 	docker compose logs -f sdep-postgres
+
+##@ DBGate (optional)
+
+dbgate-up: ## Launch DBGate and show local PostgreSQL connection details
+	@DBGATE_PIDS=$$(pgrep -f "$(DBGATE_PROCESS_PATTERN)" || true); \
+	if [ -n "$$DBGATE_PIDS" ]; then \
+		echo "⚠️  DBGate is already running (PID(s): $$DBGATE_PIDS)."; \
+		echo "   Use: make dbgate-status"; \
+		echo "   Use: make dbgate-restart"; \
+		exit 1; \
+	fi
+	@set -a && source .env && set +a && \
+	POSTGRES_STATUS=$$(docker inspect --format='{{.State.Health.Status}}' $$POSTGRES_CONTAINER_NAME 2>&1 | grep -v "^Error" || echo "not-running"); \
+	if [ "$$POSTGRES_STATUS" != "healthy" ]; then \
+		echo "⚠️  PostgreSQL container '$$POSTGRES_CONTAINER_NAME' is '$$POSTGRES_STATUS' (expected healthy)."; \
+		echo "   Start it with: make postgres-up"; \
+	fi; \
+	echo "🚀 Starting DBGate..." && \
+	echo "Use these PostgreSQL connections:" && \
+	echo "" && \
+	echo "SDEP app database:" && \
+	printf "  %-12s %s\n" "Host:" "localhost" && \
+	printf "  %-12s %s\n" "Port:" "$$POSTGRES_PORT" && \
+	printf "  %-12s %s\n" "Database:" "$$POSTGRES_DB_NAME" && \
+	printf "  %-12s %s\n" "User:" "$$POSTGRES_DB_USER" && \
+	printf "  %-12s %s\n" "Password:" "$$POSTGRES_DB_PASSWORD" && \
+	printf "  %-12s %s\n" "URL (opt):" "postgresql://$$POSTGRES_DB_USER:$$POSTGRES_DB_PASSWORD@localhost:$$POSTGRES_PORT/$$POSTGRES_DB_NAME" && \
+	echo "" && \
+	echo "Keycloak database:" && \
+	printf "  %-12s %s\n" "Host:" "localhost" && \
+	printf "  %-12s %s\n" "Port:" "$$POSTGRES_PORT" && \
+	printf "  %-12s %s\n" "Database:" "keycloak" && \
+	printf "  %-12s %s\n" "User:" "$$KC_DB_USERNAME" && \
+	printf "  %-12s %s\n" "Password:" "$$KC_DB_PASSWORD" && \
+	printf "  %-12s %s\n" "URL (opt):" "postgresql://$$KC_DB_USERNAME:$$KC_DB_PASSWORD@localhost:$$POSTGRES_PORT/keycloak" && \
+	echo "" && \
+	echo "Tip: save 2 DBGate connections (local-sdep + local-keycloak)." && \
+	echo "Then click the target DB node (sdep-data or keycloak) and Refresh."
+	@set -a && source .env && set +a && nohup dbgate "postgresql://$$POSTGRES_DB_USER:$$POSTGRES_DB_PASSWORD@localhost:$$POSTGRES_PORT/$$POSTGRES_DB_NAME" >/tmp/dbgate.log 2>&1 & echo $$! > "$(DBGATE_PID_FILE)"
+	@echo "✅ DBGate launched in background (logs: /tmp/dbgate.log)"
+
+dbgate-down: ## Stop DBGate
+	@PIDS=""; \
+	if [ -f "$(DBGATE_PID_FILE)" ]; then \
+		PID_FROM_FILE=$$(cat "$(DBGATE_PID_FILE)" 2>/dev/null || true); \
+		if [ -n "$$PID_FROM_FILE" ] && kill -0 "$$PID_FROM_FILE" 2>/dev/null; then \
+			PIDS="$$PID_FROM_FILE"; \
+		fi; \
+	fi; \
+	if [ -z "$$PIDS" ]; then \
+		PIDS=$$(pgrep -f "$(DBGATE_PROCESS_PATTERN)" || true); \
+	fi; \
+	if [ -n "$$PIDS" ]; then \
+		echo "🛑 Stopping DBGate..."; \
+		kill $$PIDS; \
+		rm -f "$(DBGATE_PID_FILE)"; \
+		echo "✅ DBGate stopped"; \
+	else \
+		rm -f "$(DBGATE_PID_FILE)"; \
+		echo "ℹ️  DBGate is not running"; \
+	fi
+
+dbgate-restart: dbgate-down dbgate-up ## Restart DBGate
+
+dbgate-status: ## Show DBGate and Postgres status
+	@set -a && source .env && set +a && \
+	POSTGRES_STATUS=$$(docker inspect --format='{{.State.Health.Status}}' $$POSTGRES_CONTAINER_NAME 2>&1 | grep -v "^Error" || echo "not-running"); \
+	DBGATE_PS=$$(pgrep -af "$(DBGATE_PROCESS_PATTERN)" || true); \
+	PID_FILE_INFO="missing"; \
+	if [ -f "$(DBGATE_PID_FILE)" ]; then PID_FILE_INFO=$$(cat "$(DBGATE_PID_FILE)" 2>/dev/null || echo "invalid"); fi; \
+	echo "🔍 Postgres status"; \
+	printf "  %-12s %s\n" "Postgres:" "$$POSTGRES_STATUS"; \
+	echo ""; \
+	echo "🔍 DBGate status (optional)"; \
+	printf "  %-16s %s\n" "DBGate pid file:" "$$PID_FILE_INFO"; \
+	if [ -n "$$DBGATE_PS" ]; then \
+		printf "  %-16s %s\n" "DBGate:" "running"; \
+		echo "  Processes:"; \
+		echo "$$DBGATE_PS"; \
+	else \
+		printf "  %-16s %s\n" "DBGate:" "stopped"; \
+	fi; \
+	printf "  %-16s %s\n" "SDEP URL:" "postgresql://$$POSTGRES_DB_USER:$$POSTGRES_DB_PASSWORD@localhost:$$POSTGRES_PORT/$$POSTGRES_DB_NAME"; \
+	printf "  %-16s %s\n" "KC URL:" "postgresql://$$KC_DB_USERNAME:$$KC_DB_PASSWORD@localhost:$$POSTGRES_PORT/keycloak"
+
+dbgate-logs: ## Tail DBGate log file
+	@touch /tmp/dbgate.log
+	@echo "📜 Tailing /tmp/dbgate.log (Ctrl+C to stop)"
+	@tail -f /tmp/dbgate.log
 
 ##@ Keycloak
 

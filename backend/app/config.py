@@ -48,6 +48,12 @@ class Settings(BaseSettings):
         description="Keycloak server URL for token endpoint",
     )
 
+    # Audit log settings
+    AUDITLOG_RETENTION: int = Field(
+        default=1,
+        description="Audit log retention in days",
+    )
+
     # Database settings
     POSTGRES_HOST: str = Field(
         default="localhost",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 260319
+
+- Implemented audit log (incl. retention)
+
 ## 260304
 
 - Implemented validation for ISO 3166-1 alpha-3 country code
