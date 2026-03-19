@@ -16,7 +16,7 @@ In such case, the platform arranges data submission with their party; the party 
 
 ## Audit log
 
-To log "who did what, where, when, from where, and with what result", plus enough context to reconstruct important actions.
+To log "**who** did **what**, **where**, **when**, **from where**, and with what **result**", plus enough context to reconstruct important actions.
 
 ### Implementation approach
 
@@ -29,24 +29,24 @@ To log "who did what, where, when, from where, and with what result", plus enoug
 
 For each request that matters (auth, data change, sensitive read), capture:
 
-| Field            | Source                                     | Description                                                      |
-| :--------------- | :----------------------------------------- | :--------------------------------------------------------------- |
-| **timestamp**    | Server clock                               | UTC, server default `now()`                                      |
-| **requestId**    | Generated                                  | UUID4 correlation ID                                             |
-| **clientId**     | JWT `client_id` claim                      | OAuth2 client identifier (nullable for unauthenticated requests) |
-| **clientName**   | JWT `client_name` claim                    | Human-readable client name (nullable)                            |
-| **roles**        | JWT `realm_access.roles`                   | Comma-separated role list (nullable)                             |
-| **action**       | Derived from method + path                 | Semantic action name, e.g. `area.create`                         |
-| **resourceType** | Derived from path                          | Entity type, e.g. `area`, `activity`                             |
-| **resourceId**   | Extracted from path                        | Entity identifier (nullable for list/create operations)          |
-| **httpMethod**   | Request                                    | HTTP method (`GET`, `POST`, `DELETE`)                            |
-| **path**         | Request                                    | Request path, e.g. `/api/v0/ca/areas`                            |
-| **queryParams**  | Request                                    | Query string (nullable)                                          |
-| **statusCode**   | Response                                   | HTTP status code                                                 |
-| **success**      | Derived from statusCode                    | `true` if statusCode < 400                                       |
-| **clientIp**     | `X-Forwarded-For` or `request.client.host` | Client IP address                                                |
-| **userAgent**    | `User-Agent` header                        | Client user agent string                                         |
-| **durationMs**   | Calculated                                 | Request processing time in milliseconds                          |
+| Field            | Source                                     | Description                                                      | Answers          |
+| :--------------- | :----------------------------------------- | :--------------------------------------------------------------- | :--------------- |
+| **clientId**     | JWT `client_id` claim                      | OAuth2 client identifier (nullable for unauthenticated requests) | Who              |
+| **clientName**   | JWT `client_name` claim                    | Human-readable client name (nullable)                            | Who              |
+| **roles**        | JWT `realm_access.roles`                   | Comma-separated role list (nullable)                             | Who              |
+| **action**       | Derived from method + path                 | Semantic action name, e.g. `area.create`                         | What             |
+| **httpMethod**   | Request                                    | HTTP method (`GET`, `POST`, `DELETE`)                            | What             |
+| **queryParams**  | Request                                    | Query string (nullable)                                          | What             |
+| **resourceType** | Derived from path                          | Entity type, e.g. `area`, `activity`                             | Where            |
+| **resourceId**   | Extracted from path                        | Entity identifier (nullable for list/create operations)          | Where            |
+| **path**         | Request                                    | Request path, e.g. `/api/v0/ca/areas`                            | Where            |
+| **timestamp**    | Server clock                               | UTC, server default `now()`                                      | When             |
+| **clientIp**     | `X-Forwarded-For` or `request.client.host` | Client IP address                                                | From where       |
+| **userAgent**    | `User-Agent` header                        | Client user agent string                                         | From where       |
+| **statusCode**   | Response                                   | HTTP status code                                                 | Result           |
+| **success**      | Derived from statusCode                    | `true` if statusCode < 400                                       | Result           |
+| **requestId**    | Generated                                  | UUID4 correlation ID                                             | —                |
+| **durationMs**   | Calculated                                 | Request processing time in milliseconds                          | —                |
 
 ### Action mapping
 
