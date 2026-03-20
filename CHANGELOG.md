@@ -1,5 +1,10 @@
 # Changelog
 
+## 260320
+
+- Updated WoW with issue labels
+- Added a warning about using only anonymized data in the pre-production (PRE) environment
+
 ## 260319
 
 - Implemented audit log (incl. retention)

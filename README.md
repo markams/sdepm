@@ -2,9 +2,9 @@
 
 Overview:
 
-- [Reference Implementation (Production)](#reference-implementation-production)
-- [Quick Start (Pre-Production)](#quick-start-pre-production)
-- [Quick start (local workstation)](#quick-start-local-workstation)
+- [Reference Implementation (production)](#reference-implementation-production)
+- [Integration Partners (pre-production)](#integration-partners-pre-production)
+- [Development (local)](#development-local)
 - [Background](#background)
 - [Main functionality](#main-functionality)
 - [Unit tests](#unit-tests)
@@ -13,24 +13,24 @@ Overview:
 - [Technical design](#technical-design)
 - [Process](#process)
 
-## Reference Implementation (Production)
+## Reference Implementation (production)
 
-The reference implementation for this repository is **SDEP Netherlands**.
+The reference implementation for this repository is **SDEP Netherlands (NL)**.
 
 **Production environment (PRD):** https://sdep.gov.nl/api/v0/docs
 
 > **Disclaimer**
 > The API is currently subject to change and may be updated **without versioning**.
 
-## Quick Start (Pre-Production)
+## Integration Partners (pre-production)
 
-The reference implementation is also available in a **pre-production environment**, allowing **integration partners** to test their integrations with SDEP.
+The reference implementation is also available in a **pre-production environment**, enabling integration partners to test their integrations with SDEP.
 
- **Pre-production environment (PRE):** https://pre-sdep.minvro.nl/api/v0/docs
+> **Warning**: you are supposed to only use anonimized data in PRE.
 
 To get started, see: [PRE](./docs/PRE.md).
 
-## Quick start (local workstation)
+## Development (local)
 
 The reference implementation can also be run **fullstack** on a local workstation.
 

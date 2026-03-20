@@ -1,4 +1,4 @@
-<h1>Way of Working (Wow)</h1>
+<h1>Way of Working (WoW)</h1>
 
 ## Partnering
 
@@ -15,7 +15,21 @@
 - **Team SDEP (NL)** assigns (exactly one) **label** to the issue and puts it into the SDEP **project**
 - **Anyone** can enter comments in (closed) issues
 
-## Planning
+## Issue labels
+
+Each issue is assigned exactly one label:
+
+| **Label**       | **Description**                                                           |
+| --------------- | ------------------------------------------------------------------------- |
+| *(Empty)*       | Newly created issue; intake/triage pending                                |
+| **Analyze**     | Requires analysis by Team SDEP (NL)                                       |
+| **Propose**     | Requires discussion and proposal by the Technical Working Group (**TWG**) |
+| **Agree**       | Reviewed and agreed upon by the Technical Working Group (**TWG**)         |
+| **EC**          | Pending decision by the European Commission                               |
+| **Enhancement** | Standard enhancement to the reference implementation or documentation     |
+| **Bug**         | Defect in the reference implementation or documentation                   |
+
+## Work in progress
 
 - **Team SDEP (NL)** maintains work in progress on **Kanban boards** in **milestones**
 - **Collaborators** can see the project's Kanban boards
