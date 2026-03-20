@@ -24,10 +24,12 @@ Each issue is assigned exactly one label:
 | *(Empty)*       | Newly created issue; intake/triage pending                                |
 | **Analyze**     | Requires analysis by Team SDEP (NL)                                       |
 | **Propose**     | Requires discussion and proposal by the Technical Working Group (**TWG**) |
-| **Agree**       | Reviewed and agreed upon by the Technical Working Group (**TWG**)         |
+| **Agree**       | Reviewed and agreed upon [1] by the Technical Working Group (**TWG**)         |
 | **EC**          | Pending decision by the European Commission                               |
 | **Enhancement** | Standard enhancement to the reference implementation or documentation     |
 | **Bug**         | Defect in the reference implementation or documentation                   |
+
+[1] Unless commented otherwise: added 72h after discussion/agreement, after which it will be implemented.
 
 ## Work in progress
 
