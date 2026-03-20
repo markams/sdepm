@@ -215,9 +215,7 @@ sdep-app/
 ├── .env                                    # Environment variables
 ├── .gitignore                              # Git ignore rules
 ├── .gitlab-ci.yml                          # GitLab CI/CD configuration
-├── AGENTS.md                               # Claude agent configuration
 ├── CHANGELOG.md                            # Changelog
-├── CLAUDE.md                               # Claude Code instructions
 ├── docker-compose.yml                      # Multi-container orchestration
 ├── LICENSE.md                              # EUPL License
 ├── Makefile                                # Root-level make targets
