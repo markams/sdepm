@@ -36,3 +36,8 @@ Each issue is assigned exactly one label:
 - **Team SDEP (NL)** maintains work in progress on **Kanban boards** in **milestones**
 - **Collaborators** can see the project's Kanban boards
 - https://github.com/orgs/SEMICeu/projects/3/views/1?groupedBy%5BcolumnId%5D=Milestone
+
+## Work completed
+
+- Change log - https://github.com/SEMICeu/sdep/blob/main/CHANGELOG.md
+- Closed issues - https://github.com/SEMICeu/sdep/issues?q=is%3Aissue%20state%3Aclosed
