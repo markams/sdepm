@@ -4,20 +4,19 @@ Welcome to the **SDEP NL pre-production environment (PRE)**.
 
 https://pre-sdep.minvro.nl/api/v0/docs
 
-This environment enables **integration partners** to test their integrations with SDEP.
+PRE enables **integration partners** to test their integrations with SDEP.
 
-> **Warning**: you are supposed to only use anonimized data in PRE.
+- As an integration partner, you can request **test accounts for SDEP NL**.
+- Supported roles include **Competent Authorities (CA)** and **Short-Term Rental Platforms (STR)**
 
-Supported integration roles include:
 
-- **Competent Authorities (CA)**
-- **Short-Term Rental Platforms (STR)**
+In PRE, you are supposed to use **only anonimized data**.
 
-As an integration partner, you can request **test accounts for SDEP NL**.
+- Nonetheless, PRE is **cleaned daily** to remove any potential residual production test data
 
-> **Note:** SDEP NL serves as a common **EU reference implementation**, but the environment itself is operated specifically for **the Netherlands (NL)**.
->
-> For **production use** in your country, please contact your **country-specific SDEP representative** regarding the SDEP deployment in your country.
+Finally, note that although SDEP NL serves as a common **EU reference implementation**, the environment itself is operated specifically for **the Netherlands (NL)**.
+
+For **production use** in your country, always contact your **country-specific SDEP representative** regarding the SDEP deployment in your country.
 
 ---
 
