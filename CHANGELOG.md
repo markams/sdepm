@@ -1,5 +1,9 @@
 # Changelog
 
+## 260323
+
+- Trimmed-down the audit log (technical management only)
+
 ## 260320
 
 - Updated WoW with issue labels

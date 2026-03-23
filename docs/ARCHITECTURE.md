@@ -347,12 +347,14 @@ POST /ca/areas (multipart/form-data: file + optional areaId, areaName)
 ### Audit Logging
 
 **AuditLogMiddleware** (`security/audit.py`) tracks all API requests to the `audit_log` table:
-- Records: request ID, client ID, client name, roles, action, resource type, resource ID, HTTP method, path, query params, status code, client IP, user agent, duration (ms)
+- Records: request ID, client ID, etc.
 - Skips low-value paths (health, docs, root)
 - Extracts JWT claims without verification (auth happens in route dependencies)
 - Writes records asynchronously to avoid blocking responses; audit failures never break the request
 
 **Audit retention** (`security/audit_retention.py`) runs a background cleanup loop (started via lifespan) that periodically deletes audit log rows older than the configured retention period (`AUDITLOG_RETENTION` setting), processing in batches of 1000.
+
+For details, see [Security](./SECURITY.md#audit-log).
 
 ### Security Headers
 

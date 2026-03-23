@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import logging
+import sys
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
@@ -12,6 +14,14 @@ from app.api.v0 import app_v0
 from app.config import settings
 from app.security import AuditLogMiddleware, SecurityHeadersMiddleware
 from app.security.audit_retention import audit_log_cleanup_loop
+
+# Configure dedicated audit logger — message-only formatter so JSON lines are clean
+_audit_logger = logging.getLogger("audit")
+_audit_logger.setLevel(logging.INFO)
+_audit_handler = logging.StreamHandler(sys.stdout)
+_audit_handler.setFormatter(logging.Formatter("%(message)s"))
+_audit_logger.addHandler(_audit_handler)
+_audit_logger.propagate = False
 
 
 @contextlib.asynccontextmanager

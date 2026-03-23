@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 .PHONY: help up down restart status test test-quiet logs postgres-up postgres-down keycloak-up keycloak-down backend-up backend-down \
-        postgres-clean postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
+        postgres-clean postgres-migrate postgres-clean-migrate postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
         .keycloak-wait .keycloak-realm .keycloak-admin .keycloak-roles .keycloak-machine-clients .get-client-credentials \
         .clean-testrun test-security test-str test-ca \
         postgres-login postgres-status postgres-auditlog postgres-full dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
@@ -138,7 +138,7 @@ postgres-status: ## Show postgres tables (SDEP)
 postgres-auditlog: ## Show SDEP audit log
 	@set -a && source .env && set +a && \
 	echo "Showing audit log for database $$POSTGRES_DB_NAME..." && \
-	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT timestamp, client_id, client_name, roles, client_ip, action, http_method, status_code FROM audit_log"
+	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT * FROM audit_log"
 
 postgres-full: postgres-status ## Show postgres tables with full details (SDEP)
 	@echo ""
@@ -153,7 +153,17 @@ postgres-full: postgres-status ## Show postgres tables with full details (SDEP)
 		fi; \
 	done
 
-postgres-clean: .clean-stale ## Clean postgres (drop, migrate)
+postgres-clean: .clean-stale ## Clean postgres (drop tables)
+	@echo "🚀 Dropping sdep-database tables..."
+	@$(MAKE) --no-print-directory .drop-database
+	@echo "✅ SDEP database cleaned!"
+
+postgres-migrate: ## Migrate postgres (create/update tables)
+	@echo "🚀 Migrating sdep-database..."
+	@$(MAKE) --no-print-directory .migrate-database
+	@echo "✅ SDEP database migrated!"
+
+postgres-clean-migrate: .clean-stale ## Clean postgres (drop + migrate)
 	@echo "🚀 Resetting sdep-database in postgres ..."
 	@$(MAKE) --no-print-directory .drop-database .migrate-database
 	@echo "✅ SDEP database reset!"
@@ -319,7 +329,7 @@ up: .build .clean-stale ## Start
 	@echo "✅ Keycloak configured!"
 
 	@echo "🚀 Initializing database..."
-	@$(MAKE) --no-print-directory postgres-clean
+	@$(MAKE) --no-print-directory postgres-clean-migrate
 	@$(MAKE) --no-print-directory postgres-load
 	@echo "✅ Database initialized!"
 

@@ -20,11 +20,11 @@ def _make_audit_row(timestamp: datetime) -> AuditLog:
     return AuditLog(
         timestamp=timestamp,
         request_id="test-request-id",
-        action="test.action",
+        action="test",
         http_method="GET",
         path="/test",
-        status_code=200,
-        success=True,
+        http_status_code=200,
+        status_code="OK",
     )
 
 
