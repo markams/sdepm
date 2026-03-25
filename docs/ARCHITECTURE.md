@@ -156,9 +156,11 @@ sdep-app/
 │   ├── pyproject.toml                      # Python project configuration (uv)
 │   └── uv.lock                             # Locked dependencies
 │
-├── tests/                                  # Integration tests (shell scripts)
+├── tests/                                  # Integration tests + performance tests
 │   ├── lib/                                # Test library utilities
 │   │   └── create_fixture_areas.sh         # Area fixture creation
+│   ├── perf/                               # Performance tests (Locust)
+│   │   └── locustfile.py                   # Bulk activity load test
 │   ├── test_auth_client.sh                 # OAuth2 token acquisition utility
 │   ├── test_auth_credentials.sh            # Test client credentials flow
 │   ├── test_auth_headers.sh                # Security headers compliance
@@ -167,8 +169,8 @@ sdep-app/
 │   ├── test_ca_areas.sh                    # Test CA area submission
 │   ├── test_health_ping.sh                 # Health check tests
 │   ├── test_str_activities.sh              # Test STR activity submission
-│   ├── test_str_areas.sh                   # Test STR area query endpoints
-│   └── README.md                           # Test documentation
+│   ├── test_str_activities_bulk.sh         # Test STR bulk activity submission
+│   └── test_str_areas.sh                   # Test STR area query endpoints
 │
 ├── keycloak/                               # Keycloak config
 │   ├── add-realm-admin.sh                  # Create realm admin user
@@ -197,7 +199,9 @@ sdep-app/
 │   ├── API.md                              # API documentation
 │   ├── ARCHITECTURE.md                     # Architecture overview (this file)
 │   ├── DATAMODEL.md                        # Data model documentation
+│   ├── INTEGRATION_TESTS.md               # Integration test documentation
 │   ├── LISTING_ACTIVITY.md                 # Activity listing documentation
+│   ├── PERFORMANCE_TESTS.md               # Performance test documentation
 │   ├── PRE.md                              # Pre-conditions documentation
 │   ├── SECURITY.md                         # Security documentation
 │   ├── WOW.md                              # Ways of working
@@ -284,6 +288,28 @@ POST /str/activities (single JSON body)
   │
   └── Response: 201 + ActivityResponse (camelCase JSON)
 
+POST /str/activities/bulk (JSON body with activities array)
+  │
+  ├── API Layer (str_activities_bulk.py)
+  │   ├── verify_bearer_token() → auth checks (roles, claims)
+  │   ├── BulkActivityRequest (Pydantic) → validates wrapper (min 1, max 1000)
+  │   └── get_async_db → auto-commit/rollback transaction
+  │
+  ├── Service Layer (activity_bulk.py) — Application-First Validation
+  │   ├── Step 1: Per-item Pydantic validation via TypeAdapter
+  │   ├── Platform resolution (once per batch, version on name change only)
+  │   ├── Intra-batch dedup (last-wins)
+  │   ├── Step 2: RI check → single SELECT for area IDs → Python dict
+  │   ├── Activity versioning → batch UPDATE (mark-as-ended)
+  │   ├── Step 3: Bulk INSERT (single multi-row INSERT)
+  │   └── Step 4: Build per-item OK/NOK feedback
+  │
+  ├── CRUD Layer (activity.py, area.py)
+  │   └── flush (not commit)
+  │
+  └── Response: 201 (all OK) / 200 (partial) / 422 (all NOK)
+       + BulkActivityResponse (camelCase JSON)
+
 POST /ca/areas (multipart/form-data: file + optional areaId, areaName)
   │
   ├── API Layer (ca_areas.py)
@@ -324,6 +350,7 @@ POST /ca/areas (multipart/form-data: file + optional areaId, areaName)
 - `GET /api/v0/str/areas/count` - Count areas
 - `GET /api/v0/str/areas/{areaId}` - Download shapefile for area
 - `POST /api/v0/str/activities` - Submit a single activity (JSON body)
+- `POST /api/v0/str/activities/bulk` - Submit up to 1000 activities in bulk (JSON body) — see [API.md § Bulk endpoint](./API.md#bulk-endpoint)
 
 ### Health
 - `GET /api/health` - Health check (unauthenticated)
@@ -433,11 +460,19 @@ make
 ### Integration Tests (`tests/`)
 - Shell scripts using curl
 - Test OAuth2 flows
-- Test API endpoints with single-item POST payloads
+- Test API endpoints with single-item and bulk POST payloads
 - Test security headers (OWASP compliance)
 - Test validation (Pydantic + business logic)
 - **Run:** `make test`
-- See [tests/README.md](../tests/README.md) for detailed test documentation
+- See [Integration Tests](INTEGRATION_TESTS.md) for detailed test documentation
+
+### Performance Tests (`tests/perf/`)
+- Locust-based load testing for the bulk activity endpoint (`POST /str/activities/bulk`)
+- Measures throughput (activities/sec), extrapolates capacity (activities/day), compares against configurable target
+- Uses isolated test data (`sdep-test-perf-*` prefix) by default; optionally keeps data in database (`PERF_KEEP_DATA=true`)
+- Configurable: `PERF_ACTIVITIES_PER_DAY` (per user), `PERF_USERS`, `PERF_DURATION_SECONDS`, `PERF_BATCH_SIZE`, `PERF_KEEP_DATA`
+- **Run:** `make test-perf` (or e.g. `make test-perf PERF_USERS=5 PERF_ACTIVITIES_PER_DAY=1000000 PERF_DURATION_SECONDS=10`)
+- See [Performance Tests](PERFORMANCE_TESTS.md) for detailed documentation
 
 ---
 

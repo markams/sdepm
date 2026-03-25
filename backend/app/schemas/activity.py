@@ -256,7 +256,7 @@ class ActivityRequest(BaseModel):
         alias="countryOfGuests",
         max_length=1024,
         description="Array of country codes of guests (optional, validated against ISO 3166-1 alpha-3 country codes, uppercase only, 1-1024 when provided)",
-        examples=[["NLD", "DEU", "BEL"]],
+        examples=[["NLD", "NLD", "DEU", "BEL"]],
     )  # Attribute
 
     @field_validator("country_of_guests", mode="before")

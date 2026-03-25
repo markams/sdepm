@@ -14,6 +14,7 @@
 - **Anyone** can enter new issues
 - **Team SDEP (NL)** assigns (exactly one) **label** to the issue and puts it into the SDEP **project**
 - **Anyone** can enter comments in (closed) issues
+-
 
 ## Issue labels
 
@@ -24,7 +25,7 @@ Each issue is assigned exactly one label:
 | *(Empty)*       | Newly created issue; intake/triage pending                                |
 | **Analyze**     | Requires analysis by Team SDEP (NL)                                       |
 | **Propose**     | Requires discussion and proposal by the Technical Working Group (**TWG**) |
-| **Agreed**      | Reviewed and agreed upon [1] by the Technical Working Group (**TWG**)     |
+| **Agreed**      | Reviewed and agreed upon by the Technical Working Group (**TWG**) [1]     |
 | **EC**          | Pending decision by the European Commission                               |
 | **Enhancement** | Standard enhancement to the reference implementation or documentation     |
 | **Bug**         | Defect in the reference implementation or documentation                   |

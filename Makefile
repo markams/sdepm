@@ -3,8 +3,8 @@ SHELL := /bin/bash
 .PHONY: help up down restart status test test-quiet logs postgres-up postgres-down keycloak-up keycloak-down backend-up backend-down \
         postgres-clean postgres-migrate postgres-clean-migrate postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
         .keycloak-wait .keycloak-realm .keycloak-admin .keycloak-roles .keycloak-machine-clients .get-client-credentials \
-        .clean-testrun test-security test-str test-ca \
-        postgres-login postgres-status postgres-auditlog postgres-full dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
+        .clean-testrun test-security test-str test-ca test-perf \
+        postgres-login postgres-status postgres-status-full postgres-auditlog postgres-activity-count dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
         backend-logs postgres-logs keycloak-logs
 
 .DEFAULT_GOAL := help
@@ -135,12 +135,7 @@ postgres-status: ## Show postgres tables (SDEP)
 		fi; \
 	done
 
-postgres-auditlog: ## Show SDEP audit log
-	@set -a && source .env && set +a && \
-	echo "Showing audit log for database $$POSTGRES_DB_NAME..." && \
-	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT * FROM audit_log"
-
-postgres-full: postgres-status ## Show postgres tables with full details (SDEP)
+postgres-status-full: postgres-status ## Show postgres tables with full details (SDEP)
 	@echo ""
 	@echo "Showing full structure of each table..."
 	@set -a && source .env && set +a && \
@@ -152,6 +147,15 @@ postgres-full: postgres-status ## Show postgres tables with full details (SDEP)
 			docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "\\d+ $$table"; \
 		fi; \
 	done
+
+postgres-auditlog: ## Show SDEP audit log
+	@set -a && source .env && set +a && \
+	echo "Showing audit log for database $$POSTGRES_DB_NAME..." && \
+	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT * FROM audit_log"
+
+postgres-activity-count: ## Count activities in database
+	@set -a && source .env && set +a && \
+	docker exec sdep-postgres psql -U $$POSTGRES_DB_USER -d $$POSTGRES_DB_NAME -c "SELECT COUNT(*) AS total FROM activity;"
 
 postgres-clean: .clean-stale ## Clean postgres (drop tables)
 	@echo "🚀 Dropping sdep-database tables..."
@@ -168,11 +172,6 @@ postgres-clean-migrate: .clean-stale ## Clean postgres (drop + migrate)
 	@$(MAKE) --no-print-directory .drop-database .migrate-database
 	@echo "✅ SDEP database reset!"
 
-generate-area-sql: ## Generate test-data/02-area-generated.sql (run manually when shapefile data changes)
-	@echo "🔄 Generating area SQL file with embedded shapefile data..."
-	@./test-data/generate-area-sql.sh
-	@echo "✅ Area SQL file generated"
-
 postgres-load: ## Load test data
 	@echo "🐳 Initializing test data..."
 	@set -a && source .env && set +a && \
@@ -186,6 +185,11 @@ postgres-load: ## Load test data
 		docker exec -i sdep-postgres psql -U $$POSTGRES_SUPER_USER -d $$POSTGRES_DB_NAME -v ON_ERROR_STOP=1 < "$$sql_file"; \
 	done
 	@echo "✅ Test data initialized"
+
+generate-area-sql: ## Generate test-data/02-area-generated.sql (run manually when shapefile data changes)
+	@echo "🔄 Generating area SQL file with embedded shapefile data..."
+	@./test-data/generate-area-sql.sh
+	@echo "✅ Area SQL file generated"
 
 postgres-logs: ## Show postgres logs
 	docker compose logs -f sdep-postgres
@@ -426,6 +430,93 @@ test: .is-up ## Test all (quiet)
 	@set -a && source ./.env && set +a && \
 	set -o pipefail && \
 	$(MAKE) --no-print-directory test-verbose 2>&1 | sed -n '/^══ TEST RESULTS/,$$p'
+
+##@ Performance
+
+PERF_ACTIVITIES_PER_DAY ?= 5000
+PERF_DURATION_SECONDS ?= 300
+PERF_BATCH_SIZE ?= 1000
+PERF_USERS ?= 10
+PERF_RAMP_UP ?= 1
+PERF_KEEP_DATA ?= false
+PERF_STOP_ON_TARGET ?= true
+PERF_YES ?= false
+
+test-perf: .is-up .get-client-credentials ## Run bulk performance test (PERF_YES=true to skip confirmation)
+	@echo "🚀 Bulk performance test" && \
+	echo "" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_ACTIVITIES_PER_DAY" "$(PERF_ACTIVITIES_PER_DAY)" "target volume per user" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_USERS" "$(PERF_USERS)" "concurrent users" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_RAMP_UP" "$(PERF_RAMP_UP)" "users spawned per second" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_DURATION_SECONDS" "$(PERF_DURATION_SECONDS)" "test duration in seconds" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_BATCH_SIZE" "$(PERF_BATCH_SIZE)" "activities per HTTP request" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_KEEP_DATA" "$(PERF_KEEP_DATA)" "keep data in database" && \
+	printf "   %-27s = %-10s (%s)\n" "PERF_STOP_ON_TARGET" "$(PERF_STOP_ON_TARGET)" "stop early when target reached" && \
+	echo "" && \
+	echo "   Override: make test-perf PERF_ACTIVITIES_PER_DAY=4000000 PERF_USERS=10 PERF_RAMP_UP=2 PERF_DURATION_SECONDS=600 PERF_BATCH_SIZE=1000 PERF_STOP_ON_TARGET=true PERF_YES=true" && \
+	echo "" && \
+	P_ACTIVITIES_PER_DAY=$(PERF_ACTIVITIES_PER_DAY) && \
+	P_USERS=$(PERF_USERS) && \
+	P_RAMP_UP=$(PERF_RAMP_UP) && \
+	P_DURATION_SECONDS=$(PERF_DURATION_SECONDS) && \
+	P_BATCH_SIZE=$(PERF_BATCH_SIZE) && \
+	P_KEEP_DATA=$(PERF_KEEP_DATA) && \
+	P_STOP_ON_TARGET=$(PERF_STOP_ON_TARGET) && \
+	if [ "$(PERF_YES)" != "true" ]; then \
+		read -p "   Continue with these settings? [Y/n] " answer && \
+		case "$$answer" in \
+			[nN]*) \
+				echo "" && \
+				read -p "   PERF_ACTIVITIES_PER_DAY [$$P_ACTIVITIES_PER_DAY]: " val && [ -n "$$val" ] && P_ACTIVITIES_PER_DAY=$$val; \
+				read -p "   PERF_USERS              [$$P_USERS]: " val && [ -n "$$val" ] && P_USERS=$$val; \
+				read -p "   PERF_RAMP_UP            [$$P_RAMP_UP]: " val && [ -n "$$val" ] && P_RAMP_UP=$$val; \
+				read -p "   PERF_DURATION_SECONDS   [$$P_DURATION_SECONDS]: " val && [ -n "$$val" ] && P_DURATION_SECONDS=$$val; \
+				read -p "   PERF_BATCH_SIZE         [$$P_BATCH_SIZE]: " val && [ -n "$$val" ] && P_BATCH_SIZE=$$val; \
+				read -p "   PERF_KEEP_DATA          [$$P_KEEP_DATA]: " val && [ -n "$$val" ] && P_KEEP_DATA=$$val; \
+				read -p "   PERF_STOP_ON_TARGET     [$$P_STOP_ON_TARGET]: " val && [ -n "$$val" ] && P_STOP_ON_TARGET=$$val; \
+				echo "";; \
+		esac; \
+	fi && \
+	echo "" && \
+	set -a && source ./.env && source ./tmp/.credentials && set +a && \
+	echo "📦 Creating fixture areas for performance test..." && \
+	PERF_AREA_IDS=$$(./tests/lib/create_fixture_areas.sh 5 "sdep-test-perf-areas" 2>/dev/null | tr '\n' ',' | sed 's/,$$//') && \
+	echo "✅ Areas created" && \
+	echo "" && \
+	USERS=$$P_USERS && \
+	echo "   Concurrent users: $$USERS" && \
+	echo "" && \
+	if CLIENT_ID=$$STR_CLIENT_ID CLIENT_SECRET=$$STR_CLIENT_SECRET ./tests/test_auth_client.sh > /dev/null 2>&1; then \
+		echo "✅ STR client authorized"; \
+	else \
+		echo "❌ STR client authorization failed"; \
+		exit 1; \
+	fi && \
+	echo "" && \
+	export PERF_BATCH_SIZE=$$P_BATCH_SIZE && \
+	export PERF_ACTIVITIES_PER_DAY=$$P_ACTIVITIES_PER_DAY && \
+	export PERF_KEEP_DATA=$$P_KEEP_DATA && \
+	export PERF_STOP_ON_TARGET=$$P_STOP_ON_TARGET && \
+	export PERF_USERS=$$USERS && \
+	export STR_CLIENT_ID=$$STR_CLIENT_ID && \
+	export STR_CLIENT_SECRET=$$STR_CLIENT_SECRET && \
+	export PERF_AREA_IDS=$$PERF_AREA_IDS && \
+	DURATION_SECS=$$P_DURATION_SECONDS && \
+	uvx --from locust locust -f tests/perf/locustfile.py \
+		--headless \
+		--host $$BACKEND_BASE_URL \
+		-u $$USERS \
+		-r $$P_RAMP_UP \
+		--run-time $${DURATION_SECS}s \
+		--only-summary; \
+	EXIT_CODE=$$?; \
+	if [ "$$P_KEEP_DATA" != "true" ]; then \
+		echo "🧹 Cleaning up test data (PERF_KEEP_DATA=false)..." && \
+		docker exec -i sdep-postgres psql -U $$POSTGRES_SUPER_USER -d $$POSTGRES_DB_NAME \
+			-v ON_ERROR_STOP=1 < postgres/clean-testrun.sql > /dev/null 2>&1 && \
+		echo "✅ Test data cleaned"; \
+	fi; \
+	exit $$EXIT_CODE
 
 ##@ Help
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 260325
+
+- Added a bulk activity endpoint `POST /str/activities/bulk` (up to 1000 items/batch, proposed)
+
 ## 260323
 
 - Trimmed-down the audit log (technical management only)

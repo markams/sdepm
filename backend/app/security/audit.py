@@ -41,6 +41,7 @@ _ACTION_RULES: list[tuple[str, re.Pattern, str, str]] = [
     ("GET", re.compile(r"^/api/v\d+/str/areas/count$"), "count", "area"),
     ("GET", re.compile(r"^/api/v\d+/str/areas/([^/]+)$"), "read", "area"),
     ("GET", re.compile(r"^/api/v\d+/str/areas$"), "list", "area"),
+    ("POST", re.compile(r"^/api/v\d+/str/activities/bulk$"), "create_bulk", "activity"),
     ("POST", re.compile(r"^/api/v\d+/str/activities$"), "create", "activity"),
     ("GET", re.compile(r"^/api/v\d+/ca/activities/count$"), "count", "activity"),
     ("GET", re.compile(r"^/api/v\d+/ca/activities$"), "list", "activity"),

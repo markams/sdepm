@@ -60,6 +60,7 @@ The middleware derives a semantic action and resource type from the HTTP method 
 | GET    | `/*/ca/areas/count`      | `area`        | `count`  |
 | GET    | `/*/ca/areas/{id}`       | `area`        | `read`   |
 | DELETE | `/*/ca/areas/{id}`       | `area`        | `delete` |
+| POST   | `/*/str/activities/bulk` | `activity`    | `create_bulk` |
 | POST   | `/*/str/activities`      | `activity`    | `create` |
 | GET    | `/*/str/areas`           | `area`        | `list`   |
 | GET    | `/*/str/areas/count`     | `area`        | `count`  |

@@ -41,6 +41,7 @@ from app.api.common.routers import (
     health,
     ping,
     str_activities,
+    str_activities_bulk,
     str_areas,
 )
 
@@ -51,6 +52,7 @@ app_v0.include_router(ca_areas.router, prefix="")
 app_v0.include_router(health.router, prefix="")
 app_v0.include_router(ping.router, prefix="")
 app_v0.include_router(str_activities.router, prefix="")
+app_v0.include_router(str_activities_bulk.router, prefix="")
 app_v0.include_router(str_areas.router, prefix="")
 
 

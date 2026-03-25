@@ -31,17 +31,19 @@ async def delete_old_audit_logs(retention_days: int) -> int:
 
     while True:
         async with create_async_session() as session, session.begin():
-            # Subquery to find a batch of expired row IDs
-            subq = (
+            # Fetch a batch of expired row IDs first, then delete.
+            # Two-step approach works on both PostgreSQL and SQLite
+            # (SQLite does not support DELETE with a subquery containing LIMIT).
+            rows = await session.execute(
                 select(AuditLog.id).where(AuditLog.timestamp < cutoff).limit(BATCH_SIZE)
             )
-            result = await session.execute(
-                delete(AuditLog).where(AuditLog.id.in_(subq))
-            )
-            deleted = result.rowcount
-            total_deleted += deleted
+            ids = rows.scalars().all()
+            if not ids:
+                break
+            result = await session.execute(delete(AuditLog).where(AuditLog.id.in_(ids)))
+            total_deleted += result.rowcount
 
-        if deleted < BATCH_SIZE:
+        if len(ids) < BATCH_SIZE:
             break
 
     return total_deleted
@@ -60,6 +62,10 @@ async def audit_log_cleanup_loop(
     cancelled — which happens during FastAPI shutdown via the ``lifespan``
     context manager in ``main.py``.
     """
+    # Wait before the first attempt so the database has time to become
+    # available during application startup.
+    await asyncio.sleep(interval_seconds)
+
     while True:
         try:
             deleted = await delete_old_audit_logs(retention_days)

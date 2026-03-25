@@ -5,10 +5,11 @@ Overview:
 - [Reference Implementation (production)](#reference-implementation-production)
 - [Integration Partners (pre-production)](#integration-partners-pre-production)
 - [Development (local)](#development-local)
-- [Background](#background)
 - [Main functionality](#main-functionality)
+- [Background](#background)
 - [Unit tests](#unit-tests)
 - [Integration tests](#integration-tests)
+- [Performance tests](#performance-tests)
 - [Functional design](#functional-design)
 - [Technical design](#technical-design)
 - [Process](#process)
@@ -48,7 +49,8 @@ Required:
 
 Optional:
 
-- DBGate
+- DBGate (a PostgreSQL management tool)
+- "uvx" (a component used in performance testing)
 
 **Clone this repo**
 
@@ -93,16 +95,6 @@ make up
 make
 ```
 
-## Background
-
-SDEP is required by EU legislation.
-
-https://eur-lex.europa.eu/eli/reg/2024/1028/oj/eng
-
-See also the Short Term Rental Application and Prototype Profile.
-
-https://github.com/SEMICeu/STR-AP
-
 ## Main functionality
 
 In accordance with EU legislation, SDEP enables the following:
@@ -115,6 +107,16 @@ In accordance with EU legislation, SDEP enables the following:
 - **Provide flagged listings** to relevant stakeholders
 
 *Support for flagged listings is currently under development.*
+
+## Background
+
+SDEP is required by EU legislation.
+
+https://eur-lex.europa.eu/eli/reg/2024/1028/oj/eng
+
+See also the Short Term Rental Application and Prototype Profile.
+
+https://github.com/SEMICeu/STR-AP
 
 ## Unit tests
 
@@ -133,7 +135,7 @@ make test
 make test-verbose
 ```
 
-The tests cover the cases as described [here](./tests/README.md).
+The tests cover the cases as described in the [integration test documentation](./docs/INTEGRATION_TESTS.md).
 
 - Tests are executed against the complete Dockerized stack
 - Test suites run sequentially: `test-security`, `test-str`, and `test-ca` - each exercising the live API via curl
@@ -142,6 +144,15 @@ The tests cover the cases as described [here](./tests/README.md).
 - A consolidated summary report presents per-suite and overall totals (executed/passed/failed) and exits with a non-zero status if any test fails
 
 The tests can also be re-used/run against real deployments (TST, ACC, PRE, PRD; contact SDEP NL for more info).
+
+## Performance tests
+
+Locust-based load testing for the bulk activity endpoint (`POST /str/activities/bulk`):
+```
+make test-perf
+```
+
+For full configuration options and usage examples, see [Performance Tests](./docs/PERFORMANCE_TESTS.md).
 
 ## Functional design
 

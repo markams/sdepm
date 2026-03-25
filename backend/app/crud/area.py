@@ -321,6 +321,34 @@ async def get_by_area_id_and_competent_authority_id_str(
     return result.scalar_one_or_none()
 
 
+async def get_area_id_map(
+    session: AsyncSession,
+    area_ids: list[str],
+) -> dict[str, int]:
+    """
+    Fetch current areas by functional IDs in a single query (Validation flow Step 2).
+
+    Returns a mapping of {functional_area_id: technical_id} for all current areas
+    matching the given IDs. Used for O(1) referential integrity checks in bulk operations.
+
+    Args:
+        session: Async database session
+        area_ids: List of area functional IDs to look up
+
+    Returns:
+        Dictionary mapping functional area_id to technical id
+    """
+    if not area_ids:
+        return {}
+
+    stmt = select(Area.area_id, Area.id).where(
+        Area.area_id.in_(area_ids),
+        Area.ended_at.is_(None),
+    )
+    result = await session.execute(stmt)
+    return {row[0]: row[1] for row in result.all()}
+
+
 async def mark_as_ended(
     session: AsyncSession,
     area_id: str,

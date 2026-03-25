@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -408,3 +408,134 @@ async def mark_as_ended(
     )
     await session.execute(stmt)
     await session.flush()
+
+
+async def bulk_mark_as_ended(
+    session: AsyncSession,
+    activity_ids: list[str],
+    platform_id: int,
+) -> None:
+    """
+    Batch mark current versions of activities as ended (set ended_at = now()).
+
+    Used for activity versioning in bulk operations: a single UPDATE marks all
+    existing current versions as ended before the bulk INSERT creates new versions.
+
+    Args:
+        session: Async database session
+        activity_ids: List of activity functional IDs to mark as ended
+        platform_id: Platform technical ID (foreign key)
+    """
+    if not activity_ids:
+        return
+
+    stmt = (
+        update(Activity)
+        .where(
+            Activity.activity_id.in_(activity_ids),
+            Activity.platform_id == platform_id,
+            Activity.ended_at.is_(None),
+        )
+        .values(ended_at=func.now())
+    )
+    await session.execute(stmt)
+    await session.flush()
+
+
+async def bulk_create(
+    session: AsyncSession,
+    activities: list[dict],
+) -> None:
+    """
+    Bulk insert activities using a single multi-row INSERT (Validation flow Step 3).
+
+    Only pre-validated records should be passed to this function.
+    All application-level validation (Pydantic, RI check, deactivation guard)
+    must be completed before calling this.
+
+    Args:
+        session: Async database session
+        activities: List of dictionaries with Activity column values
+    """
+    if not activities:
+        return
+
+    stmt = insert(Activity)
+    await session.execute(stmt, activities)
+    await session.flush()
+
+
+async def get_current_by_activity_ids(
+    session: AsyncSession,
+    activity_ids: list[str],
+    platform_id: int,
+) -> dict[str, bool]:
+    """
+    Check which activity IDs have current versions (ended_at IS NULL) for a platform.
+
+    Returns a dict mapping activity_id to True if a current version exists.
+    Used for bulk activity versioning to determine which IDs need mark-as-ended.
+
+    Args:
+        session: Async database session
+        activity_ids: List of activity functional IDs
+        platform_id: Platform technical ID
+
+    Returns:
+        Dictionary {activity_id: True} for IDs that have a current version
+    """
+    if not activity_ids:
+        return {}
+
+    stmt = select(Activity.activity_id).where(
+        Activity.activity_id.in_(activity_ids),
+        Activity.platform_id == platform_id,
+        Activity.ended_at.is_(None),
+    )
+    result = await session.execute(stmt)
+    return {row[0]: True for row in result.all()}
+
+
+async def get_deactivated_activity_ids(
+    session: AsyncSession,
+    activity_ids: list[str],
+) -> set[str]:
+    """
+    Find activity IDs that are deactivated (exist but have NO current version).
+
+    An activity is deactivated if it has at least one version but all versions
+    have ended_at set. Creating a new version for a deactivated entity is rejected.
+
+    Args:
+        session: Async database session
+        activity_ids: List of activity functional IDs to check
+
+    Returns:
+        Set of activity_ids that are deactivated
+    """
+    if not activity_ids:
+        return set()
+
+    # Find IDs that exist in the database at all
+    stmt_any = (
+        select(Activity.activity_id)
+        .where(Activity.activity_id.in_(activity_ids))
+        .distinct()
+    )
+    result_any = await session.execute(stmt_any)
+    all_existing = {row[0] for row in result_any.all()}
+
+    # Find IDs that have a current version (ended_at IS NULL)
+    stmt_current = (
+        select(Activity.activity_id)
+        .where(
+            Activity.activity_id.in_(activity_ids),
+            Activity.ended_at.is_(None),
+        )
+        .distinct()
+    )
+    result_current = await session.execute(stmt_current)
+    has_current = {row[0] for row in result_current.all()}
+
+    # Deactivated = exists but no current version
+    return all_existing - has_current

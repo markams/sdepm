@@ -195,7 +195,8 @@ Diagram:
 ## Key Patterns
 
 ### OLTP
-- Single POST
+- Single POST (`POST /str/activities`) — default for all platforms
+- Bulk POST (`POST /str/activities/bulk`) — for high-volume platforms (up to 1000 items/batch); see [API.md § Bulk endpoint](./API.md#bulk-endpoint) for design decisions
 - Single concurrency (no optimistic locking)
 
 ### ID Management

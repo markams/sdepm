@@ -1,6 +1,32 @@
 <h1>Integration Test Scripts</h1>
 
-This directory contains shell scripts for integration testing the SDEP (Single Digital Entry Point) API endpoints. These tests verify API functionality, authentication, authorization, and security compliance.
+The [../tests](../tests) directory contains shell scripts for integration testing the SDEP (Single Digital Entry Point) API endpoints.
+
+These tests verify API functionality, authentication, authorization, and security compliance.
+
+- [Running Tests](#running-tests)
+- [Test Scripts](#test-scripts)
+  - [Authentication \& authorization tests](#authentication-authorization-tests)
+    - [`test_auth_client.sh`](#test_auth_clientsh)
+    - [`test_auth_credentials.sh`](#test_auth_credentialssh)
+    - [`test_auth_headers.sh`](#test_auth_headerssh)
+    - [`test_auth_unauthorized.sh`](#test_auth_unauthorizedsh)
+  - [Healthcheck tests](#healthcheck-tests)
+    - [`test_health_ping.sh`](#test_health_pingsh)
+  - [Competent Authority (CA) tests](#competent-authority-ca-tests)
+    - [`test_ca_areas.sh`](#test_ca_areassh)
+    - [`test_ca_activities.sh`](#test_ca_activitiessh)
+  - [Short-Term Rental (STR) Platform tests](#short-term-rental-str-platform-tests)
+    - [`test_str_areas.sh`](#test_str_areassh)
+    - [`test_str_activities.sh`](#test_str_activitiessh)
+    - [`test_str_activities_bulk.sh`](#test_str_activities_bulksh)
+  - [Helper scripts](#helper-scripts)
+    - [`lib/create_fixture_areas.sh`](#libcreate_fixture_areassh)
+- [Configuration](#configuration)
+  - [Credentials](#credentials)
+  - [Bearer tokens](#bearer-tokens)
+  - [Exit Codes](#exit-codes)
+
 
 ## Running Tests
 
@@ -211,6 +237,32 @@ See [../Makefile](../Makefile). Available targets:
 
 **Response format:** `{ activityId, activityName?, areaId, url, address, registrationNumber, numberOfGuests, countryOfGuests, temporal, platformId, platformName, createdAt }`
 
+#### `test_str_activities_bulk.sh`
+**Purpose:** Test bulk activity submission for STR platforms
+
+**Setup:** Creates 3 fixture areas via `lib/create_fixture_areas.sh` before running tests.
+
+**Tests:**
+- **Test 1:** POST bulk activities (all valid) → 201, succeeded=2, failed=0
+- **Test 2:** POST bulk activities (partial success) → 200, succeeded=1, failed=1
+- **Test 3:** POST bulk activities (all invalid) → 422, succeeded=0, failed=2
+- **Test 4:** POST bulk without authentication → 401
+
+**Endpoints:**
+- `POST /api/{API_VERSION}/str/activities/bulk`
+
+**Content-Type (POST):** `application/json`
+
+**Authentication:** Requires STR client credentials (token loaded from `./tmp/.bearer_token`)
+
+**HTTP Status Codes:**
+- `201 Created` - All activities successfully created
+- `200 OK` - Partial success (some OK, some NOK)
+- `401 Unauthorized` - No/invalid authentication
+- `422 Unprocessable Content` - All activities failed validation
+
+**Response format:** `{ totalReceived, succeeded, failed, results: [{ activityIndex, activityId, status, errorMessage }] }`
+
 ---
 
 ### Helper scripts
@@ -227,7 +279,7 @@ See [../Makefile](../Makefile). Available targets:
 - Outputs created area IDs to stdout (one per line), errors to stderr
 - Does not modify `./tmp/.bearer_token` (uses a local token variable)
 
-**Used by:** `test_str_areas.sh`, `test_str_activities.sh`
+**Used by:** `test_str_areas.sh`, `test_str_activities.sh`, `test-perf` (Makefile)
 
 ---
 
