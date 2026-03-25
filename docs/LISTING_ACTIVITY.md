@@ -22,7 +22,10 @@ Although for random checks only **listings** apply, this document covers both **
   - [Activity Regulation](#activity-regulation)
   - [Activity Monitoring](#activity-monitoring)
   - [Activity Monitoring Authority (AMA)](#activity-monitoring-authority-ama)
+  - [Online Travel Agency (OTA)](#online-travel-agency-ota)
 - [Listing Regulation](#listing-regulation-1)
+  - [Flow](#flow)
+  - [Dependencies](#dependencies)
   - [Register](#register)
   - [Self-declare](#self-declare)
   - [Report](#report)
@@ -30,6 +33,8 @@ Although for random checks only **listings** apply, this document covers both **
   - [Enforce](#enforce)
   - [Monitor](#monitor)
 - [Activity regulation](#activity-regulation-1)
+- [Flow](#flow-1)
+- [Dependencies](#dependencies-1)
   - [Report](#report-1)
   - [Enforce](#enforce-1)
   - [Monitor](#monitor-1)
@@ -93,36 +98,41 @@ The process of overseeing compliance with activity regulations.
 ### Activity Monitoring Authority (AMA)
 An authority responsible for monitoring compliance with activity regulations.
 
+### Online Travel Agency (OTA)
+Alias for an STR.
+
 ---
 
 ## Listing Regulation
 
 When a host has created a listing on the STR platform, and the listing’s address falls within a regulated area, then following regulatory actions apply:
 
-| Actor    | Action                   | Detail                                                                                               |
-| -------- | ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **Host** | **Register** in RR       | Registrate the listing address and obtain a **reg#**                                                 |
-| **Host** | **Self-declare** on STR  | "I have knowledge of the regulated area"                                                             |
-| **STR**  | **Report** (1/3) to SDEP | Supply a random set of listing reg# (**random checks**)                                              |
-| **RR**   | **Report** (2/3) to SDEP | Evaluate and inform about RR reg# status and RR reg# address                                         |
-| **STR**  | **Report** (3/3) to SDEP | Flag the listing with STR reg# status (after evaluating RR reg# status and STR/RR address match) [1] |
-| **STR**  | **Inform** the host      | When NOK                                                                                             |
-| **CA**   | **Enforce** the host     | On regulation                                                                                        |
-| **LMA**  | **Monitor** the process  | At least the #reported flagged listings                                                              |
+| Actor    | Action                   | Detail                                                                                           |
+| -------- | ------------------------ | ------------------------------------------------------------------------------------------------ |
+| **Host** | **Register** in RR       | Registrate the listing address and obtain a **reg#** (is outside scope of SDEP)                  |
+| **Host** | **Self-declare** on STR  | "I have knowledge of the regulated area" (is outside scope of SDEP)                              |
+| **STR**  | **Report** (1/3) to SDEP | Supply a random set of listing reg# (**random checks**)                                          |
+| **RR**   | **Report** (2/3) to SDEP | Evaluate and inform about RR reg# status and RR reg# address                                     |
+| **STR**  | **Report** (3/3) to SDEP | Flag the listing with STR reg# status (after evaluating RR reg# status and STR/RR address match) |
+| **STR**  | **Inform** the host      | When NOK                                                                                         |
+| **CA**   | **Enforce** the host     | On regulation (is further outside scope of SDEP)                                                 |
+| **LMA**  | **Monitor** the process  | At least the #reported flagged listings (is further outside scope of SDEP)                       |
 
-[1] Can SDEP wipe the RR-info within this transaction?
+### Flow
 
-**Actor dependencies** are illustrated in the following diagram:
+![](./diagrams/LISTINGFLOW.svg)
+
+### Dependencies
 
 ![](./diagrams/LISTING.svg)
 
-**Actions** are described below.
+The **register**, **self-declare**, **report**, **inform**, **enforce** and **monitor** stages are further described below.
 
 ### Register
 
 If a listing address falls within a regulated area, the host must obtain a registration number (**reg#**) for the listing address in a registration registry (**RR**).
 
-This process is outside the scope of **SDEP**.
+This process is outside scope of **SDEP**.
 
 ### Self-declare
 
@@ -131,7 +141,7 @@ If a listing address falls within a regulated area, the host must enter on the *
 - The acquired registration number (**reg#**)
 - A self-declaration attesting to knowledge of the regulated area
 
-This process is outside the scope of **SDEP**.
+This process is outside scope of **SDEP**.
 
 ### Report
 
@@ -158,19 +168,19 @@ This process is outside the scope of **SDEP**.
 
 An **STR** informs the host when any of the above **NOK** flags applies.
 
-This process is outside the scope of **SDEP**.
+This process is outside scope of **SDEP**.
 
 ### Enforce
 
 A **CA** retrieves flagged listings from SDEP in order to enforce regulation on the host.
 
-This process is outside the scope of SDEP.
+This process is outside scope of SDEP.
 
 ### Monitor
 
 A **listing Monitoring authority** (**LMA**) determines whether an **STR** complies with listing regulation.
 
-This process is outside the scope of SDEP.
+This process is outside scope of SDEP.
 
 Minimum information required:
 
@@ -194,11 +204,15 @@ If an activity address falls within a regulated area, then following regulatory 
 | **CA**  | **Enforce** the host    | On regulation                     |
 | **AMA** | **Monitor** the process | At least the #reported activities |
 
-**Actor dependencies** are illustrated in the following diagram:
+## Flow
+
+![](./diagrams/ACTIVITYFLOW.svg)
+
+## Dependencies
 
 ![](./diagrams/ACTIVITY.svg)
 
-**Actions** are described below.
+The **report**, **enforce** and **monitor** stages are further described below.
 
 ### Report
 
@@ -210,7 +224,7 @@ If an activity address falls within a regulated area, then following regulatory 
 
 A **Competent Authority** (**CA**) retrieves activities from **SDEP** in order to enforce regulation.
 
-This process is outside the scope of **SDEP**.
+This process is outside scope of **SDEP**.
 
 For example, CA may assess whether the number of activities is less than or equal to the maximum number of allowed lettings within a given period.
 
@@ -218,7 +232,7 @@ For example, CA may assess whether the number of activities is less than or equa
 
 An **activity Monitoring authority** (**AMA**) determines whether an **STR** complies with activity regulation.
 
-This process is outside the scope of **SDEP**.
+This process is outside scope of **SDEP**.
 
 Minimum information required:
 
