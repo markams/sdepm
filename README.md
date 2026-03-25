@@ -145,6 +145,7 @@ The tests can also be re-used/run against real deployments (TST, ACC, PRE, PRD; 
 
 ## Functional design
 
+- [Architecture](./docs/diagrams/FUNCTIONAL_ARCH.jpg)
 - [Listing and Activity](./docs/LISTING_ACTIVITY.md)
 
 ## Technical design
