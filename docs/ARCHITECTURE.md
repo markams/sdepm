@@ -214,7 +214,8 @@ sdep-app/
 │       └── LISTING.svg
 │
 ├── scripts/                                # Utility scripts
-│   └── run-tests.sh                        # Test runner script
+│   ├── run-tests.sh                        # Integration test runner
+│   └── run-tests-perf.sh                   # Performance test runner (Locust)
 │
 ├── .env                                    # Environment variables
 ├── .gitignore                              # Git ignore rules
@@ -470,8 +471,8 @@ make
 - Locust-based load testing for the bulk activity endpoint (`POST /str/activities/bulk`)
 - Measures throughput (activities/sec), extrapolates capacity (activities/day), compares against configurable target
 - Uses isolated test data (`sdep-test-perf-*` prefix) by default; optionally keeps data in database (`PERF_KEEP_DATA=true`)
-- Configurable: `PERF_ACTIVITIES_PER_DAY` (per user), `PERF_USERS`, `PERF_DURATION_SECONDS`, `PERF_BATCH_SIZE`, `PERF_KEEP_DATA`
-- **Run:** `make test-perf` (or e.g. `make test-perf PERF_USERS=5 PERF_ACTIVITIES_PER_DAY=1000000 PERF_DURATION_SECONDS=10`)
+- Configurable: `PERF_ACTIVITIES_PER_DAY` (total target volume), `PERF_USERS` (concurrent users to reach target), `PERF_MAX_DURATION_SECONDS`, `PERF_BATCH_SIZE`, `PERF_KEEP_DATA`
+- **Run:** `make test-perf` (or e.g. `make test-perf PERF_USERS=5 PERF_ACTIVITIES_PER_DAY=1000000 PERF_MAX_DURATION_SECONDS=10`)
 - See [Performance Tests](PERFORMANCE_TESTS.md) for detailed documentation
 
 ---

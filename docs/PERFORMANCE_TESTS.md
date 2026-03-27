@@ -4,13 +4,15 @@ The [../tests/perf](../tests/perf) directory contains a [Locust](https://locust.
 
 ## Running Performance Tests
 
-See [../Makefile](../Makefile).
+See [../Makefile](../Makefile). The Makefile delegates to [../scripts/run-tests-perf.sh](../scripts/run-tests-perf.sh).
 
 Quick reference:
 
 | Target           | Description                                                  |
 | ---------------- | ------------------------------------------------------------ |
-| `make test-perf` | Run bulk performance test with various configuratoin options |
+| `make test-perf` | Run bulk performance test with various configuration options |
+
+To run against a Kubernetes environment (TST, ACC, PRE, PRD), use the equivalent targets in `sdep-deployment` (e.g. `make test-perf-tst`).
 
 ## `perf/locustfile.py`
 
@@ -44,13 +46,17 @@ After running the tests:
 | **Throughput**                 | Actual sustained rate of successfully processed activities per second                      |
 | **Bulk requests/sec**          | Actual sustained rate of bulk POST requests per second (x activities per request)          |
 | **Extrapolated**               | Throughput projected over 24 hours — what the system *can* sustain                         |
-| **Target**                     | What you *asked* for (`PERF_ACTIVITIES_PER_DAY` x `PERF_USERS`)                            |
+| **Target**                     | What you *asked* for (`PERF_ACTIVITIES_PER_DAY`), reached by `PERF_USERS` concurrent users  |
 | **Verdict**                    | Whether extrapolated capacity meets or exceeds the target, with the headroom ratio         |
 | **Overshoot**                  | Only shown when `PERF_STOP_ON_TARGET=true` and total exceeds target (see explanation below) |
 
 **Note on target vs extrapolated:** The target controls the *minimum* load (number of concurrent users). Each user fires requests as fast as possible, so actual throughput is whatever the server can sustain. The "extrapolated" value shows real capacity; the ratio tells you how much headroom exists above the target.
 
-**Note on overshoot when `PERF_STOP_ON_TARGET=true`:** When the target is reached, the test signals Locust to stop. However, all concurrent users have already sent their current request, and those in-flight responses still arrive and are counted. This means the total activities processed may exceed the target by up to `PERF_USERS x PERF_BATCH_SIZE`. For example, with 100 users and batch size 1000, the overshoot is at most 100,000 activities. This is inherent to concurrent load testing — `runner.quit()` cannot cancel in-flight HTTP requests.
+**Note on overshoot when `PERF_STOP_ON_TARGET=true`:** When the target is reached, the test signals Locust to stop. However, all concurrent users have already sent their current request, and those in-flight requests complete at the database level even though their responses may not be counted by Locust. The summary shows two overshoot values:
+- **Overshoot (counted):** extra activities recorded in Locust's counter beyond the target (may be 0 if the runner shut down before counting the last responses)
+- **Overshoot (max):** worst-case overshoot = `PERF_USERS x PERF_BATCH_SIZE` (e.g. 10 users x 1000 batch = 10,000 activities)
+
+The actual database row count may be higher than what Locust reports. This is inherent to concurrent load testing — `runner.quit()` cannot cancel in-flight HTTP requests.
 
 **Note on `PERF_RAMP_UP`:** Controls how many users are spawned per second (Locust's `-r` flag). Default is `1` (one user per second). With 10 users and ramp-up 1, all users are active within 10 seconds — fast enough for most tests while giving the system time to handle each user's authentication request sequentially. For stress testing with 100+ users, keeping ramp-up at 1/sec is important to avoid overwhelming the auth endpoint at startup. Set to a higher value (e.g. `PERF_RAMP_UP=10`) to spawn all users instantly.
 

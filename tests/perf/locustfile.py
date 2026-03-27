@@ -24,6 +24,7 @@ import string
 import time
 import uuid
 
+import gevent
 from locust import HttpUser, between, events, task
 
 # Configuration from environment
@@ -33,12 +34,12 @@ STR_CLIENT_ID = os.environ.get("STR_CLIENT_ID", "sdep-test-str01")
 STR_CLIENT_SECRET = os.environ.get("STR_CLIENT_SECRET", "")
 PERF_AREA_IDS = [x for x in os.environ.get("PERF_AREA_IDS", "").split(",") if x]
 PERF_USERS = int(os.environ.get("PERF_USERS", "1"))
-PERF_DURATION_SECONDS = int(os.environ.get("PERF_DURATION_SECONDS", "300"))
+PERF_MAX_DURATION_SECONDS = int(os.environ.get("PERF_MAX_DURATION_SECONDS", "300"))
 PERF_ACTIVITIES_PER_DAY = int(os.environ.get("PERF_ACTIVITIES_PER_DAY", "500000"))
 PERF_KEEP_DATA = os.environ.get("PERF_KEEP_DATA", "false").lower() in ("true", "1", "yes")
 PERF_STOP_ON_TARGET = os.environ.get("PERF_STOP_ON_TARGET", "false").lower() in ("true", "1", "yes")
 ACTIVITY_ID_PREFIX = "perf" if PERF_KEEP_DATA else "sdep-test-perf"
-TARGET_TOTAL = PERF_ACTIVITIES_PER_DAY * PERF_USERS
+TARGET_TOTAL = PERF_ACTIVITIES_PER_DAY
 
 # Global counters for summary
 total_activities_ok = 0
@@ -82,7 +83,7 @@ def on_request(request_type, name, response_time, response_length, response, exc
         # Stop early when target reached
         if PERF_STOP_ON_TARGET and total_activities_ok >= TARGET_TOTAL and _locust_environment:
             print(f"\n✅ Target reached ({total_activities_ok:,} >= {TARGET_TOTAL:,}), stopping early...")
-            _locust_environment.runner.quit()
+            gevent.spawn_later(0.1, _locust_environment.runner.quit)
     else:
         total_bulk_failures += 1
         if not first_error_logged:
@@ -91,7 +92,7 @@ def on_request(request_type, name, response_time, response_length, response, exc
         # Abort if all requests are failing
         if total_bulk_failures >= MAX_CONSECUTIVE_FAILURES and _locust_environment:
             print(f"\n❌ Aborting: {MAX_CONSECUTIVE_FAILURES} consecutive bulk request failures")
-            _locust_environment.runner.quit()
+            gevent.spawn_later(0.1, _locust_environment.runner.quit)
 
 
 _summary_printed = False
@@ -120,8 +121,7 @@ def _print_summary():
     total = total_activities_ok + total_activities_nok
     throughput = total_activities_ok / duration if duration > 0 else 0
     extrapolated_day = throughput * 86400
-    target_per_user = PERF_ACTIVITIES_PER_DAY
-    target_day = target_per_user * PERF_USERS
+    target_day = PERF_ACTIVITIES_PER_DAY
     ratio = extrapolated_day / target_day if target_day > 0 else 0
 
     minutes = int(duration // 60)
@@ -140,10 +140,10 @@ def _print_summary():
     print()
     print("══ PERFORMANCE TEST RESULTS ══════════════════════════════")
     print("  Configuration:")
-    print(_cfg("PERF_ACTIVITIES_PER_DAY", f"{target_per_user:,} ({_human(target_per_user)})"))
+    print(_cfg("PERF_ACTIVITIES_PER_DAY", f"{target_day:,} ({_human(target_day)})"))
     print(_cfg("PERF_USERS", str(PERF_USERS)))
     print(_cfg("PERF_BATCH_SIZE", str(BATCH_SIZE)))
-    print(_cfg("PERF_DURATION_SECONDS", f"{PERF_DURATION_SECONDS} ({PERF_DURATION_SECONDS / 60:.1f}m / {PERF_DURATION_SECONDS / 3600:.2f}h)"))
+    print(_cfg("PERF_MAX_DURATION_SECONDS", f"{PERF_MAX_DURATION_SECONDS} ({PERF_MAX_DURATION_SECONDS / 60:.1f}m / {PERF_MAX_DURATION_SECONDS / 3600:.2f}h)"))
     print(_cfg("PERF_STOP_ON_TARGET", str(PERF_STOP_ON_TARGET)))
     print(_cfg("PERF_KEEP_DATA", str(PERF_KEEP_DATA)))
     print("  Results:")
@@ -157,11 +157,13 @@ def _print_summary():
     print(f"    Throughput:                  {throughput:,.1f} activities/sec ({_human(throughput)}/s)")
     print(f"    Bulk requests/sec:           {bulk_requests_per_sec:,.1f} req/sec (x {BATCH_SIZE} activities/req)")
     print(f"    Extrapolated:                {extrapolated_day:,.0f} activities/day ({_human(extrapolated_day)}/day)")
-    print(f"    Target:                      {target_day:,} activities/day ({_human(target_day)}/day) ({PERF_USERS} x {target_per_user:,}/day)")
+    print(f"    Target:                      {target_day:,} activities/day ({_human(target_day)}/day) across {PERF_USERS} users")
     print(f"    Verdict:                     {icon} {verdict}")
-    if PERF_STOP_ON_TARGET and total_activities_ok > target_day:
-        overshoot = total_activities_ok - target_day
-        print(f"    Overshoot:                   +{overshoot:,} ({_human(overshoot)}) — in-flight requests from {PERF_USERS} concurrent users completed after target was reached")
+    if PERF_STOP_ON_TARGET and total_activities_ok >= target_day:
+        overshoot_counted = total_activities_ok - target_day
+        overshoot_max = PERF_USERS * BATCH_SIZE
+        print(f"    Overshoot (counted):         +{overshoot_counted:,} ({_human(overshoot_counted)})")
+        print(f"    Overshoot (max):             +{overshoot_max:,} ({_human(overshoot_max)}) — up to {PERF_USERS} in-flight requests x {BATCH_SIZE} activities may have completed at DB level but were not counted")
     print("══════════════════════════════════════════════════════════")
     print()
 
