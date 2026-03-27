@@ -1,6 +1,6 @@
-<h1>Architecture</h1>
+<h1>Technical Architecture</h1>
 
-This document provides an overview of the SDEP (Single Digital Entry Point) project structure, technology stack, and key components.
+This document provides an overview of the SDEP (Single Digital Entry Point) technical architecture:
 
 - [Overview](#overview)
 - [Technology Stack](#technology-stack)
@@ -30,6 +30,7 @@ This document provides an overview of the SDEP (Single Digital Entry Point) proj
 - [Testing Strategy](#testing-strategy)
   - [Unit Tests (`backend/tests/`)](#unit-tests-backendtests)
   - [Integration Tests (`tests/`)](#integration-tests-tests)
+  - [Performance Tests (`tests/perf/`)](#performance-tests-testsperf)
 - [SQLite vs PostgreSQL](#sqlite-vs-postgresql)
 - [Key Configuration Files](#key-configuration-files)
 
@@ -197,7 +198,7 @@ sdep-app/
 │
 ├── docs/                                   # Documentation
 │   ├── API.md                              # API documentation
-│   ├── ARCHITECTURE.md                     # Architecture overview (this file)
+│   ├── ARCHITECTURE_TECH.md                     # Architecture overview (this file)
 │   ├── DATAMODEL.md                        # Data model documentation
 │   ├── INTEGRATION_TESTS.md               # Integration test documentation
 │   ├── LISTING_ACTIVITY.md                 # Activity listing documentation

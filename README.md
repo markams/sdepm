@@ -156,12 +156,12 @@ For full configuration options and usage examples, see [Performance Tests](./doc
 
 ## Functional design
 
-- [Architecture](./docs/diagrams/FUNCTIONAL_ARCH.jpg)
+- [Architecture](./docs/ARCHITECTURE_FUNC.md)
 - [Listing and Activity](./docs/LISTING_ACTIVITY.md)
 
 ## Technical design
 
-- [Architecture](./docs/ARCHITECTURE.md)
+- [Architecture](./docs/ARCHITECTURE_TECH.md)
 - [Internal datamodel](./docs/DATAMODEL.md)
 - [API](./docs/API.md)
 - [Security](./docs/SECURITY.md)

@@ -64,7 +64,7 @@ https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/
 | 500         | Internal Server Error | Unexpected condition that prevented fulfilling the request (catch-all) |
 | 503         | Service Unavailable   | Database or authorization server (Keycloak) temporarily unavailable    |
 
-For the mapping between application exceptions and HTTP status codes, see [Exception Handling](ARCHITECTURE.md#exception-handling) in the Architecture document.
+For the mapping between application exceptions and HTTP status codes, see [Exception Handling](ARCHITECTURE_TECH.md#exception-handling) in the Architecture document.
 
 ---
 
