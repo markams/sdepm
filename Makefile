@@ -433,7 +433,7 @@ test: .is-up ## Test all (quiet)
 
 ##@ Performance
 
-PERF_ACTIVITIES_PER_DAY ?= 5000
+PERF_ACTIVITIES_TARGET ?= 5000
 PERF_MAX_DURATION_SECONDS ?= 300
 PERF_BATCH_SIZE ?= 1000
 PERF_USERS ?= 10
@@ -443,7 +443,7 @@ PERF_STOP_ON_TARGET ?= true
 PERF_YES ?= false
 
 test-perf: .is-up .get-client-credentials ## Run bulk performance test (PERF_YES=true to skip confirmation)
-	@PERF_ACTIVITIES_PER_DAY=$(PERF_ACTIVITIES_PER_DAY) \
+	@PERF_ACTIVITIES_TARGET=$(PERF_ACTIVITIES_TARGET) \
 	 PERF_USERS=$(PERF_USERS) \
 	 PERF_RAMP_UP=$(PERF_RAMP_UP) \
 	 PERF_MAX_DURATION_SECONDS=$(PERF_MAX_DURATION_SECONDS) \

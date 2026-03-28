@@ -25,6 +25,12 @@ This document provides an overview of the SDEP (Single Digital Entry Point) tech
   - [Security Headers](#security-headers)
   - [Middleware Ordering](#middleware-ordering)
 - [Transaction Management](#transaction-management)
+- [Bulk updates](#bulk-updates)
+  - [Approach](#approach)
+  - [Validation](#validation)
+  - [Validation flow (4 steps)](#validation-flow-4-steps)
+  - [HTTP status codes (bulk-specific)](#http-status-codes-bulk-specific)
+  - [Design decisions](#design-decisions)
 - [Exception Handling](#exception-handling)
 - [Development Workflow](#development-workflow)
 - [Testing Strategy](#testing-strategy)
@@ -418,6 +424,76 @@ POST endpoints use `get_async_db` which wraps the entire request in a single tra
 
 ---
 
+## Bulk updates
+
+Next to the single-record `POST /str/activities`, the bulk endpoint `POST /str/activities/bulk` is a complement for high-volume STR platforms.
+
+### Approach
+
+At high volumes (500K–4M records/day, ~6–46 records/second average), PostgreSQL is not the bottleneck — a standard Postgres instance can process thousands of transactions per second. The actual bottlenecks are:
+
+1. **Network latency** — solved by batching 500–1000 items per API call
+2. **Disk I/O (WAL pressure)** — solved by multi-row `INSERT ... VALUES` instead of individual inserts
+
+Five implementation strategies were evaluated:
+
+| Option | Strategy              | Validation   | Mechanism                                                                  | Verdict                      |
+| :----- | :-------------------- | :----------- | :------------------------------------------------------------------------- | :--------------------------- |
+| **1**  | Single, Sync          | Direct       | 1 request = 1 insert. Enormous network overhead.                           | Not recommended              |
+| **2**  | Single, Async         | Direct       | `await session.add()`. No bulk advantage, high WAL pressure.               | N/A                          |
+| **3**  | **Bulk, Sync**        | Direct (App) | API validates batch in Python. Writes "clean" data to DB in one go.        | **Best for direct feedback** |
+| **4a** | Bulk, Async (Staging) | Deferred     | API writes raw JSON to an unlogged Postgres table. Worker validates later. | Best without extra infra     |
+| **4b** | Bulk, Async (Queue)   | Deferred     | API puts batch on Redis/Kafka. Workers validate and write.                 | Best for scalability         |
+
+**Option 3 (Bulk, Sync) is the chosen approach.** At this volume, the two async alternatives solve problems that do not apply here:
+
+- **Async with staging table (4a):** defers validation to a background worker, which means the client does not get per-item OK/NOK feedback in the HTTP response. Adds operational complexity (worker process, polling/callback for results) without a performance need.
+- **Async with queue (4b):** introduces additional infrastructure (Redis/Kafka + consumer workers). Justified only for extreme peak-absorption or cross-service fan-out, neither of which applies at this volume.
+
+Synchronous bulk gives the client **immediate, per-item feedback** (OK/NOK with error reasons) in the same HTTP response, requires **no extra infrastructure** beyond the API and database, and keeps the architecture simple — validation and insert happen in one transaction with no background workers or message brokers.
+
+### Validation
+
+Instead of having the database check each record via savepoints, errors are caught in the application layer:
+
+- Application-level Pydantic validation is **many times faster** than database savepoints
+- **Horizontally scalable**: add more API nodes under load
+- **Single reference query per batch** (not per record)
+- Only "clean" (validated) data reaches the database
+-  No savepoints or nested transactions needed, which avoids the overhead of extra database round-trips.
+
+### Validation flow (4 steps)
+
+| Step                               | What                                                                                                                          | How                                                       |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **1. Pydantic Check**              | Validate each item individually against the ActivityRequest schema. Mark failed items as NOK with the error reason.           | `TypeAdapter(ActivityRequest).validate_python()` per item |
+| **2. Referential Integrity Check** | Fetch all referenced area IDs in a single query. Store in a Python `dict` for O(1) lookup. Items with unknown `areaId` → NOK. | `SELECT area_id, id FROM area WHERE area_id IN (...)`     |
+| **3. Bulk Insert**                 | Insert all remaining OK records in a single database operation.                                                               | `session.execute(insert(Activity), list_of_valid_dicts)`  |
+| **4. Feedback**                    | Return per-item OK/NOK response preserving original order, enriched with `status` and `errorMessage`.                         | JSON response with summary counts                         |
+
+### HTTP status codes (bulk-specific)
+
+| HTTP Status                   | When                                                                |
+| ----------------------------- | ------------------------------------------------------------------- |
+| **201 Created**               | All items created successfully (`failed == 0`)                      |
+| **200 OK**                    | Partial success: some OK, some NOK (`succeeded > 0 AND failed > 0`) |
+| **422 Unprocessable Content** | All items failed validation (`succeeded == 0`)                      |
+
+### Design decisions
+
+| #      | Decision                                                                                                                                                                                                          | Rationale                                                                                                                                                               |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D1** | **Per-item Pydantic validation** — the request accepts raw dicts, each validated individually in the service layer                                                                                                | One invalid item should not block the other (999) items in the batch. If one item has a missing field, the rest are still processed.                                    |
+| **D2** | **Intra-batch duplicates: last-wins** — when the same `activityId` appears multiple times in a single batch, only the last occurrence is processed; earlier occurrences receive NOK                               | Deterministic and predictable for clients. Avoids ambiguity about which version "wins".                                                                                 |
+| **D3** | **Versioning: batch UPDATE before INSERT** — existing current versions in the database are marked as ended via a single batch `UPDATE ... WHERE activity_id IN (...)` before the bulk INSERT creates new versions | Consistent with single-endpoint versioning semantics, but uses batch operations (1 UPDATE + 1 INSERT) instead of per-item queries.                                      |
+| **D4** | **Platform resolution: version only on name change** — platform is resolved once per batch; a new version is only created if the JWT claim (`client_name`) has changed                                            | Avoids unnecessary versioning churn when the same platform submits many batches with unchanged credentials.                                                             |
+| **D5** | **Deactivated entities rejected** — if an `activityId` has been deactivated (all versions have `endedAt` set), submitting it again is rejected (NOK)                                                              | Prevents "resurrecting" soft-deleted entities. Consistent with single endpoint behavior.                                                                                |
+| **D6** | **No `ON CONFLICT DO NOTHING`** — SDEP uses explicit versioning (mark-as-ended + new insert) instead of database-level upsert                                                                                     | `ON CONFLICT DO NOTHING` is a general best practice for idempotency in bulk inserts. However, SDEP's data model requires explicit versioning with `endedAt` timestamps. |
+| **D7** | **Single transaction scope** — the entire bulk operation runs in a single transaction; if the bulk INSERT fails, all changes roll back                                                                            | No partial database state. Consistent with the single endpoint's `get_async_db` auto-commit/rollback model.                                                             |
+| **D8** | **SQLite compatibility** — the bulk INSERT and all queries work on both PostgreSQL and SQLite                                                                                                                     | Unit tests run on SQLite in-memory without requiring PostgreSQL. The `StringArray` TypeDecorator handles dialect differences.                                           |
+
+---
+
 ## Exception Handling
 
 All exceptions are handled by global exception handlers defined in `app/exceptions/handlers.py` and registered in `app/api/common/exception_handlers.py`. For the complete list of HTTP status codes used by the API, see [HTTP status codes](API.md#http-status-codes).
@@ -472,8 +548,8 @@ make
 - Locust-based load testing for the bulk activity endpoint (`POST /str/activities/bulk`)
 - Measures throughput (activities/sec), extrapolates capacity (activities/day), compares against configurable target
 - Uses isolated test data (`sdep-test-perf-*` prefix) by default; optionally keeps data in database (`PERF_KEEP_DATA=true`)
-- Configurable: `PERF_ACTIVITIES_PER_DAY` (total target volume), `PERF_USERS` (concurrent users to reach target), `PERF_MAX_DURATION_SECONDS`, `PERF_BATCH_SIZE`, `PERF_KEEP_DATA`
-- **Run:** `make test-perf` (or e.g. `make test-perf PERF_USERS=5 PERF_ACTIVITIES_PER_DAY=1000000 PERF_MAX_DURATION_SECONDS=10`)
+- Configurable: `PERF_ACTIVITIES_TARGET` (total target volume), `PERF_USERS` (concurrent users to reach target), `PERF_MAX_DURATION_SECONDS`, `PERF_BATCH_SIZE`, `PERF_KEEP_DATA`
+- **Run:** `make test-perf` (or e.g. `make test-perf PERF_USERS=5 PERF_ACTIVITIES_TARGET=1000000 PERF_MAX_DURATION_SECONDS=10`)
 - See [Performance Tests](PERFORMANCE_TESTS.md) for detailed documentation
 
 ---

@@ -20,8 +20,7 @@ The reference implementation for this repository is **SDEP Netherlands (NL)**.
 
 **Production environment (PRD):** https://sdep.gov.nl/api/v0/docs
 
-> **Disclaimer**
-> The API is currently subject to change and may be updated **without versioning**.
+> **Disclaimer**: The API is yet subject to change and may be updated **without versioning**.
 
 ## Integration Partners (pre-production)
 
@@ -29,7 +28,7 @@ The reference implementation is also available in a **pre-production environment
 
 > **Warning**: You are supposed to use only anonimized data in PRE.
 
-> **Disclaimer**: Nonetheless, PRE is cleaned daily to remove any potential residual production test data.
+> **Disclaimer**: PRE is still cleaned daily to remove any potential residual production test data.
 
 To get started, see: [PRE](./docs/PRE.md).
 
