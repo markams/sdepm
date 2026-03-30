@@ -29,7 +29,7 @@ from app.services import activity_bulk as activity_bulk_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["str (proposed)"])
+router = APIRouter(tags=["str"])
 
 
 @router.post(
