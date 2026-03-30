@@ -2,6 +2,26 @@
 
 The [../tests/perf](../tests/perf) directory contains a [Locust](https://locust.io/) test for load testing the SDEP bulk activity endpoint (`POST /str/activities/bulk`).
 
+- [Running Performance Tests](#running-performance-tests)
+- [Implementation](#implementation)
+- [Results](#results)
+- [Benchmarks](#benchmarks)
+- [Database tuning](#database-tuning)
+  - [Connection pool chain](#connection-pool-chain)
+  - [SQLAlchemy pool (`backend/app/db/config.py`)](#sqlalchemy-pool-backendappdbconfigpy)
+  - [PgBouncer pool (`sdep-cnpg Pooler` resource)](#pgbouncer-pool-sdep-cnpg-pooler-resource)
+  - [Example: sizing for 50 concurrent users](#example-sizing-for-50-concurrent-users)
+- [Network tuning](#network-tuning)
+  - [Cause](#cause)
+  - [Solution alternatives](#solution-alternatives)
+  - [Recommendation](#recommendation)
+- [Service Level Objectives (SLO)](#service-level-objectives-slo)
+  - [Service Level Indicators (SLIs)](#service-level-indicators-slis)
+  - [Strategies for bulk updates](#strategies-for-bulk-updates)
+  - [Error budgets for batch processing](#error-budgets-for-batch-processing)
+  - [Summary: SLI measurement gaps](#summary-sli-measurement-gaps)
+
+
 ## Running Performance Tests
 
 See [../Makefile](../Makefile). The Makefile delegates to [../scripts/run-tests-perf.sh](../scripts/run-tests-perf.sh).
@@ -40,17 +60,18 @@ To run against a Kubernetes environment (TST, ACC, PRE, PRD), use the equivalent
 
 After running the tests:
 
-| Field                          | Meaning                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------- |
-| **Configuration**              | Repeats the parameter values used for this test run                                         |
-| **Total activities processed** | Sum of all per-item OK + NOK results across all HTTP requests, incl. overshoot              |
-| **HTTP requests**              | Total HTTP requests with per-endpoint breakdown (auth + bulk)                               |
-| **Throughput**                 | Actual sustained rate of successfully processed activities per second                       |
-| **Bulk requests/sec**          | Actual sustained rate of bulk POST requests per second (x activities per request)           |
-| **Extrapolated**               | Throughput projected over 24 hours — what the system *can* sustain                          |
-| **Target**                     | What you *asked* for (`PERF_ACTIVITIES_TARGET`), reached by `PERF_USERS` concurrent users   |
-| **Verdict**                    | Whether extrapolated capacity meets or exceeds the target, with the headroom ratio          |
-| **Overshoot**                  | Only shown when `PERF_STOP_ON_TARGET=true` and total exceeds target (see explanation below) |
+| Field                          | Meaning                                                                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- |
+| **Configuration**              | Repeats the parameter values used for this test run                                                |
+| **Total activities processed** | Sum of all per-item OK + NOK results across all HTTP requests, incl. overshoot                     |
+| **HTTP requests**              | Total HTTP requests with per-endpoint breakdown (auth + bulk)                                      |
+| **Throughput**                 | Actual sustained rate of successfully processed activities per second                              |
+| **Bulk requests/sec**          | Actual sustained rate of bulk POST requests per second (x activities per request)                  |
+| **Extrapolated**               | Throughput projected over 24 hours — what the system *can* sustain                                 |
+| **Target**                     | What you *asked* for (`PERF_ACTIVITIES_TARGET`), reached by `PERF_USERS` concurrent users          |
+| **Verdict**                    | Whether extrapolated capacity meets or exceeds the target, with the headroom ratio                 |
+| **Overshoot**                  | Only shown when `PERF_STOP_ON_TARGET=true` and total exceeds target (see explanation below)        |
+| **Correctness (SLI)**          | Post-test verification: samples 10 submitted activities and verifies them via `GET /ca/activities` |
 
 **Note on target vs extrapolated:** The target controls the *minimum* load (number of concurrent users). Each user fires requests as fast as possible, so actual throughput is whatever the server can sustain. The "extrapolated" value shows real capacity; the ratio tells you how much headroom exists above the target.
 
@@ -84,7 +105,7 @@ Industry-standard benchmarks for API response times:
 - When assessing bulk performance, consider both the per-request latency and the per-item cost (i.e., response time divided by batch size)
 - For example, processing up to 1000 activities in a single request: a 200 ms response time equates to 0.2 ms per item (excellent), whereas 200 ms for a single-item endpoint would be considered only “very good”
 
-## Tuning
+## Database tuning
 
 ### Connection pool chain
 
@@ -134,6 +155,57 @@ PgBouncer sits between the backend and PostgreSQL. Its `default_pool_size` is th
 
 If you scale to 2 backend replicas, set SQLAlchemy to `pool_size=10, max_overflow=15` (25 per replica × 2 = 50 total ≤ PgBouncer's 50).
 
+## Network tuning
+
+Under sustained load, a small percentage of HTTP requests may fail with connection-level errors (`RemoteDisconnected`, `ChunkedEncodingError`) even though the backend processed the request successfully (HTTP 201). These are not application errors — they are TCP connection drops between the client and the backend, caused by intermediate network components (reverse proxy, load balancer) closing the connection before the client reads the full response.
+
+### Cause
+
+The request path typically passes through multiple network layers:
+
+```
+Client ─► TCP load balancer (e.g. HAProxy) ─► TLS/reverse proxy (e.g. nginx-ingress) ─► Backend
+```
+
+Each layer enforces its own timeouts. A bulk request that takes several seconds under load can exceed these timeouts, causing the connection to be closed mid-response:
+
+- **TLS/reverse proxy (nginx-ingress):** `proxy-read-timeout` defaults to 60s
+  - Bulk requests with large batches under peak load can approach or exceed this
+- **TCP load balancer (HAProxy):** `timeout http-request` (time to receive the full request headers) and `timeout server` (time to wait for the backend response) can also drop connections
+  - For example, `timeout http-request 10s` may be too aggressive for large payloads that are slow to transmit
+
+### Solution alternatives
+
+1. **Client-side retry logic (implemented in the performance test)**
+
+   The bulk activity endpoint is idempotent (re-submitting an `activityId` versions the previous record rather than creating a duplicate), so retrying on connection-level failures is safe. The Locust test retries up to 2 times with linear backoff (0.5s, 1.0s) when the response status code is 0 (connection failure). This handles transient network drops without requiring infrastructure changes.
+
+2. **TLS/reverse proxy timeout (deployment concern, out of scope of this project)**
+
+   Increase `proxy-read-timeout` to accommodate bulk request processing times. For example, in nginx-ingress:
+
+   ```yaml
+   # nginx-ingress annotation
+   nginx.ingress.kubernetes.io/proxy-read-timeout: "300"   # 5 minutes
+   ```
+
+   This gives the backend enough time to process large batches without the reverse proxy closing the connection prematurely.
+
+3. **TCP load balancer timeout (deployment concern, out of scope of this project)**
+
+   Ensure the load balancer's server-side timeout is at least as large as the reverse proxy timeout. For example, in HAProxy:
+
+   ```
+   timeout http-request  30s    # time to receive full request headers
+   timeout server        300s   # time to wait for backend response
+   ```
+
+   If `timeout http-request` is too low, large payloads transmitted over slow connections may be dropped before the backend even starts processing.
+
+### Recommendation
+
+Apply all three: client-side retry absorbs occasional hiccups regardless of infrastructure, while the proxy and load balancer timeouts prevent the hiccups from occurring in the first place. The proxy and load balancer changes are deployment-level configuration managed in `sdep-deployment`.
+
 
 ## Service Level Objectives (SLO)
 
@@ -166,8 +238,7 @@ A bug in transformation logic can silently corrupt millions of records in a sing
 
 - **Definition:** The percentage of records where the output is valid according to defined business rules.
 - **Measurement:** Typically done via "canary data" or integration tests that run alongside the pipeline.
-- **Current coverage:** Not measured. The performance test generates randomized payloads but does not verify that the persisted data matches the submitted data. The existing integration tests (`tests/integration/`) cover correctness for individual requests but not under bulk load.
-- **Suggestion:** After the performance test completes, sample a small number of submitted activities (e.g. 10) and verify them via `GET /str/activities/{id}`, checking that all fields match the submitted payload. This would catch silent data corruption under load (e.g. race conditions, partial writes).
+- **Current coverage:** Measured. After the performance test completes, the test samples 10 submitted activities and verifies them via `GET /ca/activities` (using the CA client, since the STR client has no GET endpoint). For each sampled activity, it compares key fields (`url`, `areaId`, `registrationNumber`, `numberOfGuests`, `address.*`) against the originally submitted payload. Results are printed as `Correctness (SLI)` in the summary. This catches silent data corruption under load (e.g. race conditions, partial writes).
 
 **D. Throughput**
 
@@ -197,12 +268,12 @@ Batch errors behave differently in an error budget than request-level errors:
 
 ### Summary: SLI measurement gaps
 
-| SLI         | Measured by perf test?                                               | Suggested extension                            |
-| ----------- | -------------------------------------------------------------------- | ---------------------------------------------- |
-| Freshness   | N/A — not meaningful for a push-based API                            | —                                              |
-| Coverage    | Yes — `Coverage (SLI)` in summary                                    | —                                              |
-| Correctness | No                                                                   | Post-test sample-and-verify via GET endpoint   |
-| Throughput  | Yes                                                                  | —                                              |
+| SLI         | Measured by perf test?                                             | Suggested extension |
+| ----------- | ------------------------------------------------------------------ | ------------------- |
+| Freshness   | N/A — not meaningful for a push-based API                          | —                   |
+| Coverage    | Yes — `Coverage (SLI)` in summary                                  | —                   |
+| Correctness | Yes — `Correctness (SLI)` in summary (post-test sample-and-verify) | —                   |
+| Throughput  | Yes                                                                | —                   |
 
 ---
 *Based on the Google SRE Workbook & Google Cloud Architecture Framework.*

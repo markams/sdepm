@@ -18,6 +18,7 @@ Usage:
 """
 
 import atexit
+import json
 import os
 import random
 import string
@@ -25,7 +26,14 @@ import time
 import uuid
 
 import gevent
+import requests as http_requests
 from locust import HttpUser, between, events, task
+
+# Correctness verification: sample activities for post-test GET verification
+CORRECTNESS_SAMPLE_SIZE = 10
+BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://localhost:8000")
+CA_CLIENT_ID = os.environ.get("CA_CLIENT_ID", "")
+CA_CLIENT_SECRET = os.environ.get("CA_CLIENT_SECRET", "")
 
 # Configuration from environment
 BATCH_SIZE = int(os.environ.get("PERF_BATCH_SIZE", "500"))
@@ -46,6 +54,9 @@ total_activities_ok = 0
 total_activities_nok = 0
 total_bulk_failures = 0
 total_http_failures = 0
+total_response_bytes = 0
+total_request_bytes = 0
+sampled_activities: list[dict] = []
 requests_per_endpoint: dict[str, int] = {}
 MAX_CONSECUTIVE_FAILURES = 10
 test_start_time = None
@@ -67,8 +78,9 @@ first_error_logged = False
 @events.request.add_listener
 def on_request(request_type, name, response_time, response_length, response, exception, **kwargs):
     """Track per-activity success/failure from bulk response."""
-    global total_activities_ok, total_activities_nok, total_bulk_failures, total_http_failures, first_error_logged
+    global total_activities_ok, total_activities_nok, total_bulk_failures, total_http_failures, first_error_logged, total_response_bytes
     requests_per_endpoint[name] = requests_per_endpoint.get(name, 0) + 1
+    total_response_bytes += response_length or 0
     if response is None:
         return
     if name == "/auth/token":
@@ -118,6 +130,121 @@ def _human(n: float) -> str:
     if abs_n >= 1_000:
         return f"{n / 1_000:.0f}K"
     return str(int(n))
+
+
+def _verify_correctness():
+    """Verify sampled activities via GET /ca/activities (correctness SLI).
+
+    Authenticates as CA client, fetches persisted activities, and compares
+    key fields against the originally submitted payloads to detect silent
+    data corruption under load (race conditions, partial writes).
+    """
+    if not PERF_KEEP_DATA:
+        print("  Correctness (SLI):         skipped (requires PERF_KEEP_DATA=true)")
+        return
+    if not sampled_activities:
+        print("  Correctness (SLI):         skipped (no samples collected)")
+        return
+    if not CA_CLIENT_ID or not CA_CLIENT_SECRET:
+        print("  Correctness (SLI):         skipped (CA_CLIENT_ID/CA_CLIENT_SECRET not set)")
+        return
+
+    # Authenticate as CA
+    try:
+        auth_resp = http_requests.post(
+            f"{BACKEND_BASE_URL}/api/{API_VERSION}/auth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": CA_CLIENT_ID,
+                "client_secret": CA_CLIENT_SECRET,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=30,
+        )
+        if auth_resp.status_code != 200:
+            print(f"  Correctness (SLI):         skipped (CA auth failed: HTTP {auth_resp.status_code})")
+            return
+        ca_token = auth_resp.json().get("access_token")
+    except Exception as e:
+        print(f"  Correctness (SLI):         skipped (CA auth error: {e})")
+        return
+
+    # Fetch activities as CA, paginating until all samples are found
+    sample_ids = {a["activityId"] for a in sampled_activities}
+    persisted: dict[str, dict] = {}
+    offset = 0
+    page_size = 1000
+    max_pages = 20  # safety limit
+    try:
+        for _ in range(max_pages):
+            get_resp = http_requests.get(
+                f"{BACKEND_BASE_URL}/api/{API_VERSION}/ca/activities",
+                params={"limit": page_size, "offset": offset},
+                headers={"Authorization": f"Bearer {ca_token}"},
+                timeout=60,
+            )
+            if get_resp.status_code != 200:
+                print(f"  Correctness (SLI):         skipped (GET activities failed: HTTP {get_resp.status_code})")
+                return
+            page = get_resp.json().get("activities", [])
+            for a in page:
+                if a["activityId"] in sample_ids:
+                    persisted[a["activityId"]] = a
+            # Stop if all samples found or no more pages
+            if len(persisted) >= len(sample_ids) or len(page) < page_size:
+                break
+            offset += page_size
+    except Exception as e:
+        print(f"  Correctness (SLI):         skipped (GET activities error: {e})")
+        return
+
+    # Compare sampled activities against persisted data
+    verified = 0
+    not_found = 0
+    mismatches: list[str] = []
+    fields_to_check = [
+        ("url", "url"),
+        ("areaId", "areaId"),
+        ("registrationNumber", "registrationNumber"),
+        ("numberOfGuests", "numberOfGuests"),
+    ]
+    address_fields = [
+        ("street", "street"),
+        ("number", "number"),
+        ("postalCode", "postalCode"),
+        ("city", "city"),
+    ]
+
+    for submitted in sampled_activities:
+        activity_id = submitted["activityId"]
+        stored = persisted.get(activity_id)
+        if not stored:
+            not_found += 1
+            continue
+
+        ok = True
+        for sub_key, stored_key in fields_to_check:
+            if submitted.get(sub_key) != stored.get(stored_key):
+                mismatches.append(f"    {activity_id}: {sub_key} submitted={submitted.get(sub_key)!r} != stored={stored.get(stored_key)!r}")
+                ok = False
+        # Check address sub-fields
+        stored_addr = stored.get("address", {})
+        submitted_addr = submitted.get("address", {})
+        for sub_key, stored_key in address_fields:
+            if submitted_addr.get(sub_key) != stored_addr.get(stored_key):
+                mismatches.append(f"    {activity_id}: address.{sub_key} submitted={submitted_addr.get(sub_key)!r} != stored={stored_addr.get(stored_key)!r}")
+                ok = False
+        if ok:
+            verified += 1
+
+    total_checked = len(sampled_activities)
+    pct = (verified / total_checked * 100) if total_checked > 0 else 0
+    icon = "✅" if verified == total_checked and not_found == 0 else "⚠️"
+    print(f"  Correctness (SLI):         {icon} {verified}/{total_checked} sampled activities verified ({pct:.0f}% match)")
+    if not_found > 0:
+        print(f"    {not_found} activities not found in GET response (may exceed limit=1000 page)")
+    for m in mismatches:
+        print(m)
 
 
 def _print_summary():
@@ -170,7 +297,13 @@ def _print_summary():
         print(f"      {endpoint:<30} {count:,}")
     print(f"    Duration:                    {minutes}m {seconds:02d}s")
     print(f"    Throughput:                  {throughput:,.1f} activities/sec ({_human(throughput)}/s) (sustained rate)")
-    print(f"    Bulk requests/sec:           {bulk_requests_per_sec:,.1f} req/sec (x PERF_BATCH_SIZE={BATCH_SIZE} activities/req)")
+    print(f"    Bulk requests/sec:           {bulk_requests_per_sec:,.1f} req/sec (x PERF_BATCH_SIZE={BATCH_SIZE} activities/req; may be lower than PERF_USERS={PERF_USERS} during ramp-up or short runs)")
+    response_mb = total_response_bytes / (1024 * 1024)
+    request_mb = total_request_bytes / (1024 * 1024)
+    total_mb = response_mb + request_mb
+    total_mbps = total_mb / duration if duration > 0 else 0
+    print(f"    HTTP payload:                {total_mb:,.1f} MB total ({request_mb:,.1f} MB sent, {response_mb:,.1f} MB received)")
+    print(f"    HTTP throughput:             {total_mbps:,.2f} MB/s")
     print(f"    Extrapolated:                {extrapolated_day:,.0f} activities/day ({_human(extrapolated_day)}/day) (throughput x 24h)")
     print(f"    Target:                      {target_volume:,} activities/day ({_human(target_volume)}/day) (PERF_ACTIVITIES_TARGET across PERF_USERS={PERF_USERS})")
     print(f"    Verdict:                     {icon} {verdict}")
@@ -231,10 +364,17 @@ def _atexit_handler():
     print("  These benchmarks are based on individual HTTP requests.")
     print("  When assessing bulk performance, consider both the per-request latency")
     print("  and the per-item cost (i.e., response time divided by batch size).")
-    print("  For example, processing up to 1000 activities in a single request:")
-    print("  a 200 ms response time equates to 0.2 ms per item (excellent),")
-    print("  whereas 200 ms for a single-item endpoint would be only \"very good\".")
+    print(f"  For example, processing up to {BATCH_SIZE:,} activities in a single request:")
+    print(f"  a 10 s response time equates to {10000 / BATCH_SIZE:.0f} ms per item (excellent),")
+    print("  whereas 10 s for a single-item endpoint would be unacceptable.")
     print()
+
+    # Correctness verification (runs after Locust has fully stopped)
+    print("══ CORRECTNESS VERIFICATION ══════════════════════════════")
+    _verify_correctness()
+    print("══════════════════════════════════════════════════════════")
+    print()
+
 
 def _generate_activity(area_id: str, timestamp: str) -> dict:
     """Generate a realistic activity dict for performance testing."""
@@ -305,24 +445,35 @@ class BulkActivityUser(HttpUser):
             for _ in range(BATCH_SIZE)
         ]
 
-        response = self.client.post(
-            f"/api/{API_VERSION}/str/activities/bulk",
-            json={"activities": activities},
-            headers={
-                "Authorization": f"Bearer {self._token}",
-                "Content-Type": "application/json",
-            },
-            name="/str/activities/bulk",
-        )
+        payload = {"activities": activities}
+        global total_request_bytes
+        total_request_bytes += len(json.dumps(payload))
 
-        if response.status_code == 401:
-            self._refresh_token()
-            self.client.post(
+        # Retry on transient connection errors (RemoteDisconnected, ChunkedEncodingError).
+        # Safe because the bulk endpoint is idempotent (activity versioning handles re-submissions).
+        max_retries = 2
+        for attempt in range(1 + max_retries):
+            response = self.client.post(
                 f"/api/{API_VERSION}/str/activities/bulk",
-                json={"activities": activities},
+                json=payload,
                 headers={
                     "Authorization": f"Bearer {self._token}",
                     "Content-Type": "application/json",
                 },
                 name="/str/activities/bulk",
             )
+
+            if response.status_code == 401:
+                self._refresh_token()
+                continue
+
+            # Retry on connection-level failures (status_code 0 = no response received)
+            if response.status_code == 0 and attempt < max_retries:
+                time.sleep(0.5 * (attempt + 1))
+                continue
+
+            break
+
+        # Sample one activity for post-test correctness verification (only when keeping data)
+        if PERF_KEEP_DATA and response.status_code in (200, 201) and len(sampled_activities) < CORRECTNESS_SAMPLE_SIZE:
+            sampled_activities.append(random.choice(activities))

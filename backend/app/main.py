@@ -13,6 +13,7 @@ from app.api.common_app import app_common
 from app.api.v0 import app_v0
 from app.config import settings
 from app.security import AuditLogMiddleware, SecurityHeadersMiddleware
+from app.db.config import async_engine
 from app.security.audit_retention import audit_log_cleanup_loop
 
 # Configure dedicated audit logger — message-only formatter so JSON lines are clean
@@ -26,12 +27,23 @@ _audit_logger.propagate = False
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Manage background tasks tied to the application lifecycle."""
+    """Manage background tasks tied to the application lifecycle.
+
+    On shutdown (e.g. SIGTERM from Kubernetes during HPA scale-down):
+    1. Cancel background tasks (audit log cleanup loop)
+    2. Dispose the SQLAlchemy async engine — this closes all pooled database
+       connections gracefully, so the process can exit with code 0 instead of
+       being killed by SIGKILL after terminationGracePeriodSeconds.
+    """
     task = asyncio.create_task(audit_log_cleanup_loop(settings.AUDITLOG_RETENTION))
     yield
+    # --- Graceful shutdown (e.g. on external SIGTERM) ---
     task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await task
+    # Close all pooled database connections so asyncpg doesn't complain
+    # about abandoned connections on process exit.
+    await async_engine.dispose()
 
 
 # Create FastAPI application instance

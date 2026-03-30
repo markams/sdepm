@@ -43,14 +43,8 @@ async_engine: AsyncEngine = create_async_engine(
     database_url,
     pool_pre_ping=True,
     pool_recycle=3600,  # Recycle connections after 1 hour
-    # Pool sizing: must accommodate concurrent bulk requests.
-    # PgBouncer allows 50 server connections (default_pool_size=50),
-    # so pool_size + max_overflow should stay well below that limit
-    # to leave headroom for other clients (psql, migrations, monitoring).
-    # 20 + 30 = 50 max app connections; with a single replica that uses
-    # up to 50 of PgBouncer's budget — scale down if adding replicas.
-    pool_size=20,
-    max_overflow=30,
+    pool_size=settings.APP_POOL_SIZE,
+    max_overflow=settings.APP_POOL_MAX_OVERFLOW,
     connect_args=connect_args,
 )
 

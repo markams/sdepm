@@ -1,5 +1,11 @@
 # Changelog
 
+## 260330
+
+- Removed "proposed" from the bulk activity endpoint >> final (no impact on API)
+- Added config got application connection pool (same defaults as before, no impact on API)
+- Improved performance tests
+
 ## 260325
 
 - Added a bulk activity endpoint `POST /str/activities/bulk` (up to 1000 items/batch, proposed)
@@ -23,11 +29,11 @@
 
 ## 260303
 
-- Improved Quick start (local workstation) => keycloak config
+- Improved Quick start (local workstation) >> keycloak config
 
 ## 260227
 
-- Reverted the list and count endpoints for STR to retrieve their own data (`GET /str/activities`, `GET /str/activities/count`) => discuss
+- Reverted the list and count endpoints for STR to retrieve their own data (`GET /str/activities`, `GET /str/activities/count`) >> discuss
 
 ## 260225
 
