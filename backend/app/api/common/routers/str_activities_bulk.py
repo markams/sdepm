@@ -96,13 +96,11 @@ Per-item results with summary counts. HTTP status varies:
                                 "activityIndex": 0,
                                 "activityId": "550e8400-e29b-41d4-a716-446655440000",
                                 "status": "OK",
-                                "errorMessage": None,
                             },
                             {
                                 "activityIndex": 1,
                                 "activityId": "660f9511-f30c-52e5-b827-557766551111",
                                 "status": "OK",
-                                "errorMessage": None,
                             },
                         ],
                     }
@@ -123,13 +121,12 @@ Per-item results with summary counts. HTTP status varies:
                                 "activityIndex": 0,
                                 "activityId": "550e8400-e29b-41d4-a716-446655440000",
                                 "status": "OK",
-                                "errorMessage": None,
                             },
                             {
                                 "activityIndex": 1,
                                 "activityId": "660f9511-f30c-52e5-b827-557766551111",
                                 "status": "NOK",
-                                "errorMessage": "Area with areaId '953cf3c5-de1d-5120-ba06-82da26662f00' not found",
+                                "errorMessage": "Area with areaId 'c5f54e98-226a-411b-b015-ca13070c6dc5' not found",
                             },
                         ],
                     }
@@ -157,7 +154,7 @@ Per-item results with summary counts. HTTP status varies:
                             {
                                 "activityId": "550e8400-e29b-41d4-a716-446655440000",
                                 "activityName": "Amsterdam Summer Rental",
-                                "areaId": "842be2b4-cd0c-4019-a9d5-71c9140a5eff",
+                                "areaId": "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
                                 "url": "http://example.com/amsterdam-myhouse-1",
                                 "address": {
                                     "street": "Prinsengracht",
@@ -178,7 +175,7 @@ Per-item results with summary counts. HTTP status varies:
                             {
                                 "activityId": "660f9511-f30c-52e5-b827-557766551111",
                                 "activityName": "Rotterdam Weekend Stay",
-                                "areaId": "953cf3c5-de1d-5120-ba06-82da26662f00",
+                                "areaId": "c5f54e98-226a-411b-b015-ca13070c6dc5",
                                 "url": "http://example.com/rotterdam-apartment-2",
                                 "address": {
                                     "street": "Witte de Withstraat",

@@ -186,11 +186,6 @@ postgres-load: ## Load test data
 	done
 	@echo "✅ Test data initialized"
 
-generate-area-sql: ## Generate test-data/02-area-generated.sql (run manually when shapefile data changes)
-	@echo "🔄 Generating area SQL file with embedded shapefile data..."
-	@./test-data/generate-area-sql.sh
-	@echo "✅ Area SQL file generated"
-
 postgres-logs: ## Show postgres logs
 	docker compose logs -f sdep-postgres
 
@@ -369,6 +364,11 @@ logs: ## Show logs
 	@set -a && source .env && set +a && \
 	docker exec -i sdep-postgres psql -U $$POSTGRES_SUPER_USER -d $$POSTGRES_DB_NAME \
 		-v ON_ERROR_STOP=1 < postgres/clean-testrun.sql
+
+generate-area-sql: ## Generate test-data/02-area-generated.sql (run  when shapefile data changes)
+	@echo "🔄 Generating area SQL file with embedded shapefile data..."
+	@./test-data/generate-area-sql.sh
+	@echo "✅ Area SQL file generated"
 
 test-security: .is-up .get-client-credentials ## Test security (headers, unauthorized, credentials)
 	@set -a && source ./.env && source ./tmp/.credentials && set +a && set -o pipefail && \

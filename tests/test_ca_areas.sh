@@ -42,7 +42,7 @@ FAILED_TESTS=0
 
 # Check if test shapefile exists (resolve relative to script location)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SHAPEFILE_PATH="$SCRIPT_DIR/../test-data/shapefiles/Amsterdam-dummy.zip"
+SHAPEFILE_PATH="$SCRIPT_DIR/../test-data/shapefiles/Amsterdam.zip"
 if [ ! -f "$SHAPEFILE_PATH" ]; then
     echo "❌ Error: Test shapefile not found at $SHAPEFILE_PATH"
     exit 1

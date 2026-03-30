@@ -65,13 +65,15 @@ async def create_activities_bulk(
         try:
             activity_req = _activity_request_adapter.validate_python(raw)
         except ValidationError as e:
-            # Extract first error message for concise feedback
+            # Show all validation errors so the client can fix in one go
             errors = e.errors()
             if errors:
-                first = errors[0]
-                loc = ".".join(str(part) for part in first.get("loc", []))
-                msg = first.get("msg", str(e))
-                error_msg = f"{loc}: {msg}" if loc else msg
+                parts = []
+                for err in errors:
+                    loc = ".".join(str(part) for part in err.get("loc", []))
+                    msg = err.get("msg", str(e))
+                    parts.append(f"{loc}: {msg}" if loc else msg)
+                error_msg = "; ".join(parts)
             else:
                 error_msg = str(e)
 

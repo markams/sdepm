@@ -151,7 +151,7 @@ See [../Makefile](../Makefile). Available targets:
 
 **Authentication:** Requires CA client credentials (token loaded from `./tmp/.bearer_token`)
 
-**Payload:** Form fields: `file` (shapefile upload), `areaId` (optional), `areaName` (optional). Uses `test-data/shapefiles/Amsterdam-dummy.zip`.
+**Payload:** Form fields: `file` (shapefile upload), `areaId` (optional), `areaName` (optional). Uses `test-data/shapefiles/Amsterdam.zip`.
 
 **HTTP Status Codes:**
 - `201 Created` - Area successfully created
@@ -275,7 +275,7 @@ See [../Makefile](../Makefile). Available targets:
 **What it does:**
 - Authenticates using CA client credentials (`CA_CLIENT_ID`, `CA_CLIENT_SECRET`)
 - Creates `count` areas (default: 3) with `prefix`-prefixed IDs via individual `POST /ca/areas` requests
-- Uploads `test-data/shapefiles/Amsterdam-dummy.zip` as multipart/form-data for each area
+- Uploads `test-data/shapefiles/Amsterdam.zip` as multipart/form-data for each area
 - Outputs created area IDs to stdout (one per line), errors to stderr
 - Does not modify `./tmp/.bearer_token` (uses a local token variable)
 

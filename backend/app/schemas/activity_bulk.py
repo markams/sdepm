@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_serializer
 
 __all__ = [
     "BulkActivityRequest",
@@ -69,9 +69,17 @@ class BulkActivityResultItem(BaseModel):
     error_message: str | None = Field(
         None,
         alias="errorMessage",
-        description="Error description when status is NOK; null when status is OK",
-        examples=[None],
+        description="Error description when status is NOK; omitted when status is OK",
+        examples=["Area with areaId 'unknown-id' not found"],
     )
+
+    @model_serializer(mode="wrap")
+    def _serialize_model(self, serializer, info):
+        """Exclude errorMessage from response when it's None (OK items)."""
+        data = serializer(self)
+        if data.get("errorMessage") is None:
+            data.pop("errorMessage", None)
+        return data
 
 
 class BulkActivityResponse(BaseModel):
@@ -117,13 +125,11 @@ class BulkActivityResponse(BaseModel):
                     "activityIndex": 0,
                     "activityId": "550e8400-e29b-41d4-a716-446655440000",
                     "status": "OK",
-                    "errorMessage": None,
                 },
                 {
                     "activityIndex": 1,
                     "activityId": "660f9511-f30c-52e5-b827-557766551111",
                     "status": "OK",
-                    "errorMessage": None,
                 },
             ]
         },

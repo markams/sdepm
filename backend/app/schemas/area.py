@@ -38,7 +38,7 @@ class AreaResponse(BaseModel):
         max_length=64,
         pattern=r"^[a-z0-9-]+$",
         description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["7c9e6679-7425-40de-944b-e07fc1f90ae7"],
+        examples=["3ab7c2b9-5c8d-4100-bc3e-00ac115f0495"],
     )  # Functional ID
     area_name: str | None = Field(
         None,
@@ -111,7 +111,7 @@ class AreaOwnResponse(BaseModel):
         max_length=64,
         pattern=r"^[a-z0-9-]+$",
         description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["7c9e6679-7425-40de-944b-e07fc1f90ae7"],
+        examples=["3ab7c2b9-5c8d-4100-bc3e-00ac115f0495"],
     )
     area_name: str | None = Field(
         None,

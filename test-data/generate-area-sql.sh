@@ -38,7 +38,7 @@ encode_file_to_hex() {
 # Define area
 # Format: "competent_authority_area_id|filename|zipfile|competent_authority_id|comment"
 declare -a AREAS=(
-    "amsterdam-area0363|Amsterdam-dummy.zip|Amsterdam-dummy.zip|sdep-ca0363|Amsterdam area"
+    "amsterdam-area0363|Amsterdam.zip|Amsterdam.zip|sdep-ca0363|Amsterdam area"
     "rotterdam-area0599|Rotterdam.zip|Rotterdam.zip|sdep-ca0599|Rotterdam area"
     "denhaag-area0518|Den-Haag.zip|Den-Haag-dummy.zip|sdep-ca0518|Den Haag area"
     "amstelveen-area0362|Amstelveen.zip|Amstelveen-dummy.zip|sdep-ca0362|Amstelveen area"

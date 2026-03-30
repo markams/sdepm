@@ -92,7 +92,7 @@ router = APIRouter(tags=["str"])
                     "example": {
                         "activityId": "550e8400-e29b-41d4-a716-446655440000",
                         "activityName": "Amsterdam Summer Rental",
-                        "areaId": "842be2b4-cd0c-4019-a9d5-71c9140a5eff",
+                        "areaId": "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
                         "competentAuthorityId": "sdep-ca0363",
                         "competentAuthorityName": "Gemeente Amsterdam",
                         "url": "http://example.com/amsterdam-myhouse-1",

@@ -31,7 +31,7 @@ fi
 
 # Read shapefile
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SHAPEFILE_PATH="$SCRIPT_DIR/../../test-data/shapefiles/Amsterdam-dummy.zip"
+SHAPEFILE_PATH="$SCRIPT_DIR/../../test-data/shapefiles/Amsterdam.zip"
 
 # Create areas individually via single-item multipart/form-data endpoint
 for i in $(seq 1 $COUNT); do
