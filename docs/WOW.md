@@ -45,19 +45,19 @@ Each issue is assigned exactly one label:
 
 
 
-# GitHub — Manual for New Users (SDEP)
+## GitHub — Manual for New Users (SDEP)
  
 This manual is for people from the business side who want to follow issues and discussions in the SDEP GitHub repositories — no technical background required.
  
 **Relevant links:**
-- Issues: https://scanner.topsec.com/?d=1777&r=show&u=https%3A%2F%2Fgithub.com%2FSEMICeu%2Fsdep%2Fissues&t=cca926054a0c1bc6246340eb12ac706542910434
-- Project board: https://scanner.topsec.com/?d=1777&r=show&u=https%3A%2F%2Fgithub.com%2Forgs%2FSEMICeu%2Fprojects%2F3&t=b871ceaf9a1043db41344ee9f434df89bec0c18d
+- Issues: https://github.com/SEMICeu/sdep/issues
+- Project board: https://github.com/orgs/SEMICeu/projects/3
  
 ---
  
-## Step 1 — Create a GitHub account
+### Step 1 — Create a GitHub account
  
-1. Go to https://scanner.topsec.com/?d=1777&r=show&u=https%3A%2F%2Fgithub.com&t=95da174023dea3513d647c9ca07c88b2ddd6d903
+1. Go to https://github.com
 2. Click **Sign up**
 3. Enter your email address, choose a username and password
 4. Verify your email address via the confirmation mail
@@ -67,7 +67,7 @@ This manual is for people from the business side who want to follow issues and d
  
 ---
  
-## Step 2 — Become a collaborator
+### Step 2 — Become a collaborator
  
 To receive notifications and participate in discussions, you need to be added to the SDEP repository.
  
@@ -79,11 +79,11 @@ You will receive an invitation by email — click **Accept invitation** to confi
  
 ---
  
-## Step 3 — Set up notifications
+### Step 3 — Set up notifications
  
-### Watch the repository
+#### Watch the repository
  
-1. Go to https://scanner.topsec.com/?d=1777&r=show&u=https%3A%2F%2Fgithub.com%2FSEMICeu%2Fsdep&t=6637f60fceb46949b8394342fab8bbd5299e8fa8
+1. Go to https://github.com/SEMICeu/sdep
 2. Click the **Watch** button (top right, next to Star)
 3. Choose your preferred level:
  
@@ -95,12 +95,12 @@ You will receive an invitation by email — click **Accept invitation** to confi
  
 > **Recommended for business users:** choose **All activity** or **Custom → Issues** so you are notified of every new issue and discussion.
  
-### Watch the project board
+#### Watch the project board
  
-1. Go to https://scanner.topsec.com/?d=1777&r=show&u=https%3A%2F%2Fgithub.com%2Forgs%2FSEMICeu%2Fprojects%2F3&t=b871ceaf9a1043db41344ee9f434df89bec0c18d
+1. Go to https://github.com/orgs/SEMICeu/projects/3
 2. GitHub does not send direct notifications for project board changes, but issues linked to the board will still trigger notifications if you watch the repository.
  
-### Notification delivery
+#### Notification delivery
  
 Go to **GitHub → Settings → Notifications** to choose how you receive notifications:
  
@@ -110,7 +110,7 @@ Go to **GitHub → Settings → Notifications** to choose how you receive notifi
  
 ---
  
-## Step 4 — Filter notifications in your email client
+### Step 4 — Filter notifications in your email client
  
 GitHub notification emails all come from `notifications@github.com` and contain consistent subject lines and headers. You can use these to automatically move them to a dedicated folder.
  
