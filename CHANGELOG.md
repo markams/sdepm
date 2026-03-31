@@ -5,7 +5,7 @@
 - Removed "proposed" from the bulk activity endpoint >> final (no impact on API)
 - Added config got application connection pool (same defaults as before, no impact on API)
 - Improved performance tests
-- Added all validation errors in  bulk activity endpoint response (instead of only the first error)
+- Added all validation errors in bulk activity endpoint response (instead of only the first error)
 - Fixed Amsterdam shapefile
 
 ## 260325
