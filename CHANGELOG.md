@@ -1,5 +1,9 @@
 # Changelog
 
+## 260401
+
+- Harmonized Address to EU/INSPIRE >> impacts API >> see [migration guide](./docs/MIGRATION_ADDRESS_INSPIRE.md)
+
 ## 260330
 
 - Removed "proposed" from the bulk activity endpoint >> final (no impact on API)

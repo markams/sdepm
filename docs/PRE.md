@@ -4,6 +4,15 @@ Welcome to the **SDEP NL pre-production environment (PRE)**.
 
 https://pre-sdep.minvro.nl/api/v0/docs
 
+- [SDEP NL - PRE](#sdep-nl-pre)
+  - [Introduction](#introduction)
+  - [Background](#background)
+    - [Supported roles](#supported-roles)
+  - [Call for action](#call-for-action)
+
+
+## Introduction
+
 PRE enables **integration partners** to test their integrations with SDEP.
 
 - As an integration partner, you can request **test accounts for SDEP NL**.
@@ -55,7 +64,7 @@ To receive your test account credentials, please provide the following contact d
 - **Technical contact phone number** – used to send the **machine client secret**
 
 To request **test accounts**, please contact us via email. \
-You can find the contact details and at:
+You can find the contact details at:
 
 - https://pre-sdep.minvro.nl/api/v0/docs
 

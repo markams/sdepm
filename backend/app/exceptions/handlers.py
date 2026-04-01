@@ -50,10 +50,18 @@ async def validation_exception_handler(
     # Standard error response
     details = []
     for error in exc.errors():
+        if error["type"] == "json_invalid":
+            loc = None
+            msg = "Request body contains invalid JSON syntax"
+        else:
+            raw_loc = error.get("loc")
+            loc = list(raw_loc) if raw_loc else None
+            msg = error["msg"]
         details.append(
             ErrorDetail(
-                msg=error["msg"],
+                msg=msg,
                 type=error["type"],
+                loc=loc,
             )
         )
 
@@ -70,7 +78,7 @@ async def validation_exception_handler(
 
     return JSONResponse(
         status_code=status_code,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -98,7 +106,7 @@ async def business_logic_exception_handler(
 
     return JSONResponse(
         status_code=status_code,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -120,7 +128,7 @@ async def authentication_exception_handler(
 
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
         headers={"WWW-Authenticate": "Bearer"},
     )
 
@@ -138,7 +146,7 @@ async def authorization_exception_handler(
 
     return JSONResponse(
         status_code=status.HTTP_403_FORBIDDEN,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -155,7 +163,7 @@ async def resource_not_found_exception_handler(
 
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -187,7 +195,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
     response = JSONResponse(
         status_code=exc.status_code,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
     # Include WWW-Authenticate header for 401 errors
@@ -213,7 +221,7 @@ async def database_unavailable_exception_handler(
     )
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -234,7 +242,7 @@ async def authorization_server_unavailable_exception_handler(
     )
     return JSONResponse(
         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )
 
 
@@ -261,5 +269,5 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=error_response.model_dump(mode="json"),
+        content=error_response.model_dump(mode="json", exclude_none=True),
     )

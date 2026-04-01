@@ -209,10 +209,10 @@ def _verify_correctness():
         ("numberOfGuests", "numberOfGuests"),
     ]
     address_fields = [
-        ("street", "street"),
-        ("number", "number"),
-        ("postalCode", "postalCode"),
-        ("city", "city"),
+        ("thoroughfare", "thoroughfare"),
+        ("locatorDesignatorNumber", "locatorDesignatorNumber"),
+        ("postCode", "postCode"),
+        ("postName", "postName"),
     ]
 
     for submitted in sampled_activities:
@@ -384,10 +384,10 @@ def _generate_activity(area_id: str, timestamp: str) -> dict:
         "url": f"http://{ACTIVITY_ID_PREFIX}.example.com/{unique}",
         "registrationNumber": f"REGPERF{unique[:8].upper()}",
         "address": {
-            "street": random.choice(["Prinsengracht", "Keizersgracht", "Herengracht", "Damrak", "Rokin"]),
-            "number": random.randint(1, 999),
-            "postalCode": f"{random.randint(1000, 9999)}{''.join(random.choices(string.ascii_uppercase, k=2))}",
-            "city": random.choice(["Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven"]),
+            "thoroughfare": random.choice(["Prinsengracht", "Keizersgracht", "Herengracht", "Damrak", "Rokin"]),
+            "locatorDesignatorNumber": random.randint(1, 999),
+            "postCode": f"{random.randint(1000, 9999)}{''.join(random.choices(string.ascii_uppercase, k=2))}",
+            "postName": random.choice(["Amsterdam", "Rotterdam", "Den Haag", "Utrecht", "Eindhoven"]),
         },
         "temporal": {
             "startDatetime": timestamp,

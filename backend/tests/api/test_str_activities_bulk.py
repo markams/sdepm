@@ -31,10 +31,10 @@ def _make_activity(area_id: str, suffix: str = "001", **overrides) -> dict:
         "url": f"http://example.com/bulk-{suffix}",
         "registrationNumber": f"REG-{suffix}",
         "address": {
-            "street": "Turfmarkt",
-            "number": 147,
-            "postalCode": "2500EA",
-            "city": "Den Haag",
+            "thoroughfare": "Turfmarkt",
+            "locatorDesignatorNumber": 147,
+            "postCode": "2500EA",
+            "postName": "Den Haag",
         },
         "temporal": {
             "startDatetime": "2025-06-01T14:00:00Z",
@@ -149,7 +149,7 @@ class TestSTRActivitiesBulkAPI:
         for item in data["results"]:
             assert item["status"] == "OK"
             assert item["activityId"] is not None
-            assert item["errorMessage"] is None
+            assert item.get("errorMessage") is None
 
     # ── Failure cases ────────────────────────────────────────────────────
 

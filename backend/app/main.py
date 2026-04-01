@@ -12,8 +12,8 @@ from app.api.common.exception_handlers import register_exception_handlers
 from app.api.common_app import app_common
 from app.api.v0 import app_v0
 from app.config import settings
-from app.security import AuditLogMiddleware, SecurityHeadersMiddleware
 from app.db.config import async_engine
+from app.security import AuditLogMiddleware, SecurityHeadersMiddleware
 from app.security.audit_retention import audit_log_cleanup_loop
 
 # Configure dedicated audit logger — message-only formatter so JSON lines are clean

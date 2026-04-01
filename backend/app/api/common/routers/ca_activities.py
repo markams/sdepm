@@ -31,7 +31,7 @@ router = APIRouter(tags=["ca"])
     "- `activityName`: Optional human-readable name for this activity\n"
     "- `areaId`: Functional ID referencing the area where this activity took place\n"
     "- `url`: URL of the advertisement\n"
-    "- `address`: Address composite (`street`, `number`, `letter`, `addition`, `postalCode`, `city`)\n"
+    "- `address`: Address composite (`thoroughfare`, `locatorDesignatorNumber`, `locatorDesignatorLetter`, `locatorDesignatorAddition`, `postCode`, `postName`)\n"
     "- `registrationNumber`: Registration number for the address\n"
     "- `numberOfGuests`: Number of guests (optional)\n"
     "- `countryOfGuests`: Array of country codes of guests (optional)\n"
@@ -52,10 +52,10 @@ router = APIRouter(tags=["ca"])
                                 "areaId": "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
                                 "url": "http://example.com/amsterdam-myhouse-1",
                                 "address": {
-                                    "street": "Prinsengracht",
-                                    "number": 263,
-                                    "postalCode": "1016HV",
-                                    "city": "Amsterdam",
+                                    "thoroughfare": "Prinsengracht",
+                                    "locatorDesignatorNumber": 263,
+                                    "postCode": "1016GV",
+                                    "postName": "Amsterdam",
                                 },
                                 "registrationNumber": "REG0001",
                                 "numberOfGuests": 4,
@@ -113,7 +113,7 @@ async def get_activities(
     - activityName: Optional human-readable name
     - areaId: Functional ID
     - url: URL of the advertisement
-    - address: Address composite (street, number, letter, addition, postalCode, city)
+    - address: Address composite (thoroughfare, locatorDesignatorNumber, locatorDesignatorLetter, locatorDesignatorAddition, postCode, postName)
     - registrationNumber: Registration number
     - numberOfGuests: Number of guests (optional)
     - countryOfGuests: Array of country codes (optional)
@@ -167,12 +167,18 @@ async def get_activities(
             areaId=activity_dict["area_id"],
             url=activity_dict["url"],
             address=AddressResponse(
-                street=activity_dict["address_street"],
-                number=activity_dict["address_number"],
-                letter=activity_dict["address_letter"],
-                addition=activity_dict["address_addition"],
-                postalCode=activity_dict["address_postal_code"],
-                city=activity_dict["address_city"],
+                thoroughfare=activity_dict["address_thoroughfare"],
+                locatorDesignatorNumber=activity_dict[
+                    "address_locator_designator_number"
+                ],
+                locatorDesignatorLetter=activity_dict[
+                    "address_locator_designator_letter"
+                ],
+                locatorDesignatorAddition=activity_dict[
+                    "address_locator_designator_addition"
+                ],
+                postCode=activity_dict["address_post_code"],
+                postName=activity_dict["address_post_name"],
             ),
             registrationNumber=activity_dict["registration_number"],
             numberOfGuests=activity_dict["number_of_guests"],

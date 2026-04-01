@@ -14,7 +14,6 @@
 - **Anyone** can enter new issues
 - **Team SDEP (NL)** assigns (exactly one) **label** to the issue and puts it into the SDEP **project**
 - **Anyone** can enter comments in (closed) issues
--
 
 ## Issue labels
 

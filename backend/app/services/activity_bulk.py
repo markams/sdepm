@@ -212,12 +212,18 @@ async def create_activities_bulk(
                     "platform_id": platform.id,
                     "area_id": area_id_map[service_dict["area_id"]],
                     "url": service_dict["url"],
-                    "address_street": service_dict["address_street"],
-                    "address_number": service_dict["address_number"],
-                    "address_letter": service_dict.get("address_letter"),
-                    "address_addition": service_dict.get("address_addition"),
-                    "address_postal_code": service_dict["address_postal_code"],
-                    "address_city": service_dict["address_city"],
+                    "address_thoroughfare": service_dict["address_thoroughfare"],
+                    "address_locator_designator_number": service_dict[
+                        "address_locator_designator_number"
+                    ],
+                    "address_locator_designator_letter": service_dict.get(
+                        "address_locator_designator_letter"
+                    ),
+                    "address_locator_designator_addition": service_dict.get(
+                        "address_locator_designator_addition"
+                    ),
+                    "address_post_code": service_dict["address_post_code"],
+                    "address_post_name": service_dict["address_post_name"],
                     "registration_number": service_dict["registration_number"],
                     "number_of_guests": service_dict["number_of_guests"],
                     "country_of_guests": service_dict["country_of_guests"],

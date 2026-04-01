@@ -134,16 +134,16 @@ Diagram:
 
 ### Address (Composite)
 
-**Purpose:** Structured address information for rental activities
+**Purpose:** Structured address information for rental activities (INSPIRE/STR-AP format)
 
-| Attribute      | Type   | Constraints                                                  |
-| :------------- | :----- | :----------------------------------------------------------- |
-| **street**     | string | mandatory, length <= 64, e.g. Turfmarkt                      |
-| **number**     | int    | mandatory, e.g. 147                                          |
-| **letter**     | string | optional, length <= 1, e.g. "a"                              |
-| **addition**   | string | optional, length <= 10, for example 5h                       |
-| **postalCode** | string | mandatory, length <= 8, no spaces, alphanumeric, e.g. 2500EA |
-| **city**       | string | mandatory, length <= 64, e.g. Den Haag                       |
+| Attribute                     | Type   | Constraints                                                   |
+| :---------------------------- | :----- | :------------------------------------------------------------ |
+| **thoroughfare**              | string | mandatory, length <= 80, e.g. Turfmarkt                       |
+| **locatorDesignatorNumber**   | int    | mandatory, >= 1, e.g. 147                                     |
+| **locatorDesignatorLetter**   | string | optional, length <= 10, alphabetic, e.g. "a", "bis"           |
+| **locatorDesignatorAddition** | string | optional, length <= 128, e.g. "5h"                            |
+| **postCode**                  | string | mandatory, length <= 10, no spaces, alphanumeric, e.g. 2500EA |
+| **postName**                  | string | mandatory, length <= 80, e.g. Den Haag                        |
 
 ---
 
@@ -164,25 +164,25 @@ Diagram:
 
 **Purpose:** Append-only log of API requests for compliance, security monitoring, and operational accountability
 
-| Attribute        | Type     | Constraints                                              |
-| :--------------- | :------- | :------------------------------------------------------- |
-| **id**           | int      | is technical id, mandatory                               |
-| **timestamp**    | datetime | mandatory, UTC, server default now()                     |
-| **requestId**    | string   | mandatory, UUID4, length <= 64                           |
-| **clientId**     | string   | nullable, length <= 64, from JWT client_id               |
-| **clientName**   | string   | nullable, length <= 64, from JWT client_name             |
-| **roles**        | string   | nullable, length <= 256, comma-separated                 |
-| **action**       | string   | mandatory, length <= 64, semantic action name            |
-| **resourceType** | string   | nullable, length <= 32                                   |
-| **resourceId**   | string   | nullable, length <= 64                                   |
-| **httpMethod**   | string   | mandatory, length <= 10                                  |
-| **path**         | string   | mandatory, length <= 512                                 |
-| **queryParams**  | string   | nullable, length <= 512                                  |
-| **statusCode**   | int      | mandatory                                                |
-| **success**      | bool     | mandatory                                                |
-| **clientIp**     | string   | nullable, length <= 45                                   |
-| **userAgent**    | string   | nullable, length <= 256                                  |
-| **durationMs**   | int      | nullable                                                 |
+| Attribute        | Type     | Constraints                                   |
+| :--------------- | :------- | :-------------------------------------------- |
+| **id**           | int      | is technical id, mandatory                    |
+| **timestamp**    | datetime | mandatory, UTC, server default now()          |
+| **requestId**    | string   | mandatory, UUID4, length <= 64                |
+| **clientId**     | string   | nullable, length <= 64, from JWT client_id    |
+| **clientName**   | string   | nullable, length <= 64, from JWT client_name  |
+| **roles**        | string   | nullable, length <= 256, comma-separated      |
+| **action**       | string   | mandatory, length <= 64, semantic action name |
+| **resourceType** | string   | nullable, length <= 32                        |
+| **resourceId**   | string   | nullable, length <= 64                        |
+| **httpMethod**   | string   | mandatory, length <= 10                       |
+| **path**         | string   | mandatory, length <= 512                      |
+| **queryParams**  | string   | nullable, length <= 512                       |
+| **statusCode**   | int      | mandatory                                     |
+| **success**      | bool     | mandatory                                     |
+| **clientIp**     | string   | nullable, length <= 45                        |
+| **userAgent**    | string   | nullable, length <= 256                       |
+| **durationMs**   | int      | nullable                                      |
 
 **Notes:**
 - Append-only: no updates or deletes (except automated retention cleanup)

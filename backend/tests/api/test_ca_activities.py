@@ -351,11 +351,11 @@ class TestCAActivitiesAPI:
         # Verify address composite
         assert "address" in activity
         address = activity["address"]
-        assert isinstance(address["street"], str)
-        assert isinstance(address["number"], int)
-        assert isinstance(address["postalCode"], str)
-        assert isinstance(address["city"], str)
-        # letter and addition are optional
+        assert isinstance(address["thoroughfare"], str)
+        assert isinstance(address["locatorDesignatorNumber"], int)
+        assert isinstance(address["postCode"], str)
+        assert isinstance(address["postName"], str)
+        # locatorDesignatorLetter and locatorDesignatorAddition are optional
 
         # Verify temporal composite
         assert "temporal" in activity

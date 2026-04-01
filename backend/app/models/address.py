@@ -5,63 +5,65 @@ class Address:
     """Address composite representing physical addresses.
 
     This is a composite type (not a standalone entity) used inline in Activity.
-    Represents a physical location with street, number, and other address components.
+    Represents a physical location using INSPIRE/STR-AP field names for EU
+    interoperability, with granular locatorDesignator sub-fields for national
+    registry compatibility (e.g., Dutch BAG).
     """
 
     def __init__(
         self,
-        street: str,
-        number: int,
-        letter: str | None,
-        addition: str | None,
-        postal_code: str,
-        city: str,
+        thoroughfare: str,
+        locator_designator_number: int,
+        locator_designator_letter: str | None,
+        locator_designator_addition: str | None,
+        post_code: str,
+        post_name: str,
     ):
         """Initialize Address composite.
 
         Args:
-            street: Street name (max 64 chars, mandatory), for example "Turfmarkt"
-            number: House number (mandatory), for example 147
-            letter: House letter, for example "a"
-            addition: House addition, for example "5h"
-            postal_code: Postal code (max 8 chars, alfanumeric, no spaces, mandatory), for example "2500EA"
-            city: City name (max 64 chars, mandatory), for example "Den Haag"
+            thoroughfare: Street / public space name (max 80 chars, mandatory), e.g. "Prinsengracht"
+            locator_designator_number: Numeric house number component (mandatory), e.g. 263
+            locator_designator_letter: Letter/character suffix (max 10 chars, optional), e.g. "a", "bis"
+            locator_designator_addition: Additional qualifier (max 128 chars, optional), e.g. "II", "Apt 3"
+            post_code: Postal code (max 10 chars, alphanumeric, no spaces, mandatory), e.g. "1016GV"
+            post_name: City / town / village (max 80 chars, mandatory), e.g. "Amsterdam"
         """
-        self.street = street
-        self.number = number
-        self.letter = letter
-        self.addition = addition
-        self.postal_code = postal_code
-        self.city = city
+        self.thoroughfare = thoroughfare
+        self.locator_designator_number = locator_designator_number
+        self.locator_designator_letter = locator_designator_letter
+        self.locator_designator_addition = locator_designator_addition
+        self.post_code = post_code
+        self.post_name = post_name
 
     def __composite_values__(
         self,
     ) -> tuple[str, int, str | None, str | None, str, str]:
         """Return the composite values for SQLAlchemy."""
         return (
-            self.street,
-            self.number,
-            self.letter,
-            self.addition,
-            self.postal_code,
-            self.city,
+            self.thoroughfare,
+            self.locator_designator_number,
+            self.locator_designator_letter,
+            self.locator_designator_addition,
+            self.post_code,
+            self.post_name,
         )
 
     def __repr__(self) -> str:
         """String representation of Address."""
-        return f"<Address(street='{self.street}', number={self.number}, city='{self.city}')>"
+        return f"<Address(thoroughfare='{self.thoroughfare}', locator_designator_number={self.locator_designator_number}, post_name='{self.post_name}')>"
 
     def __eq__(self, other: object) -> bool:
         """Compare two Address instances."""
         if not isinstance(other, Address):
             return False
         return (
-            self.street == other.street
-            and self.number == other.number
-            and self.letter == other.letter
-            and self.addition == other.addition
-            and self.postal_code == other.postal_code
-            and self.city == other.city
+            self.thoroughfare == other.thoroughfare
+            and self.locator_designator_number == other.locator_designator_number
+            and self.locator_designator_letter == other.locator_designator_letter
+            and self.locator_designator_addition == other.locator_designator_addition
+            and self.post_code == other.post_code
+            and self.post_name == other.post_name
         )
 
     def __ne__(self, other: object) -> bool:

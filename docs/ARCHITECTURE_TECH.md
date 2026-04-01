@@ -249,7 +249,7 @@ The backend follows a **layered architecture** pattern:
 ### Schemas Layer (`app/schemas/`)
 - Pydantic models for request/response validation
 - Data serialization/deserialization
-- camelCase aliases for JSON API (e.g. `activityId`, `areaId`, `postalCode`)
+- camelCase aliases for JSON API (e.g. `activityId`, `areaId`, `postCode`)
 - Validation (Layer 1: type/format validation)
 
 ### Service Layer (`app/services/`)

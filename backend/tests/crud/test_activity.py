@@ -21,10 +21,10 @@ class TestActivityCRUD:
         activity_id = "550e8400-e29b-41d4-a716-446655440000"
         activity_name = "Amsterdam Summer Rental 2025"
         url = "http://example.com/listing-1"
-        address_street = "Main Street"
-        address_number = 123
-        address_postal_code = "1234AB"
-        address_city = "Amsterdam"
+        address_thoroughfare = "Main Street"
+        address_locator_designator_number = 123
+        address_post_code = "1234AB"
+        address_post_name = "Amsterdam"
         registration_number = "REG123456"
         number_of_guests = 4
         country_of_guests = ["NLD", "DEU"]
@@ -39,12 +39,12 @@ class TestActivityCRUD:
             platform_id=platform.id,
             area_id=area.id,
             url=url,
-            address_street=address_street,
-            address_number=address_number,
-            address_letter=None,
-            address_addition=None,
-            address_postal_code=address_postal_code,
-            address_city=address_city,
+            address_thoroughfare=address_thoroughfare,
+            address_locator_designator_number=address_locator_designator_number,
+            address_locator_designator_letter=None,
+            address_locator_designator_addition=None,
+            address_post_code=address_post_code,
+            address_post_name=address_post_name,
             registration_number=registration_number,
             number_of_guests=number_of_guests,
             country_of_guests=country_of_guests,
@@ -58,12 +58,15 @@ class TestActivityCRUD:
         assert result.activity_id == activity_id
         assert result.activity_name == activity_name
         assert result.url == url
-        assert result.address_street == address_street
-        assert result.address_number == address_number
-        assert result.address_letter is None
-        assert result.address_addition is None
-        assert result.address_postal_code == address_postal_code
-        assert result.address_city == address_city
+        assert result.address_thoroughfare == address_thoroughfare
+        assert (
+            result.address_locator_designator_number
+            == address_locator_designator_number
+        )
+        assert result.address_locator_designator_letter is None
+        assert result.address_locator_designator_addition is None
+        assert result.address_post_code == address_post_code
+        assert result.address_post_name == address_post_name
         assert result.registration_number == registration_number
         assert result.area_id == area.id
         assert result.number_of_guests == number_of_guests
@@ -90,12 +93,12 @@ class TestActivityCRUD:
             platform_id=platform.id,
             area_id=area.id,
             url="http://example.com/listing-autogen",
-            address_street="Auto Street",
-            address_number=999,
-            address_letter=None,
-            address_addition=None,
-            address_postal_code="9999ZZ",
-            address_city="AutoCity",
+            address_thoroughfare="Auto Street",
+            address_locator_designator_number=999,
+            address_locator_designator_letter=None,
+            address_locator_designator_addition=None,
+            address_post_code="9999ZZ",
+            address_post_name="AutoCity",
             registration_number="REGAUTO",
             number_of_guests=2,
             country_of_guests=["NLD"],
@@ -115,8 +118,8 @@ class TestActivityCRUD:
         # Arrange
         area = await AreaFactory.create_async(async_session)
         platform = await PlatformFactory.create_async(async_session)
-        address_letter = "A"
-        address_addition = "1hoog"
+        address_locator_designator_letter = "A"
+        address_locator_designator_addition = "1hoog"
 
         # Act
         result = await activity.create(
@@ -126,12 +129,12 @@ class TestActivityCRUD:
             platform_id=platform.id,
             area_id=area.id,
             url="http://example.com/listing-2",
-            address_street="Side Street",
-            address_number=456,
-            address_letter=address_letter,
-            address_addition=address_addition,
-            address_postal_code="5678CD",
-            address_city="Rotterdam",
+            address_thoroughfare="Side Street",
+            address_locator_designator_number=456,
+            address_locator_designator_letter=address_locator_designator_letter,
+            address_locator_designator_addition=address_locator_designator_addition,
+            address_post_code="5678CD",
+            address_post_name="Rotterdam",
             registration_number="REG789012",
             number_of_guests=2,
             country_of_guests=["BEL"],
@@ -140,8 +143,14 @@ class TestActivityCRUD:
         )
 
         # Assert
-        assert result.address_letter == address_letter
-        assert result.address_addition == address_addition
+        assert (
+            result.address_locator_designator_letter
+            == address_locator_designator_letter
+        )
+        assert (
+            result.address_locator_designator_addition
+            == address_locator_designator_addition
+        )
 
     async def test_delete_activity(self, async_session: AsyncSession):
         """Test deleting an existing activity."""
@@ -502,12 +511,12 @@ class TestActivityCRUD:
             platform_id=platform.id,
             area_id=area.id,
             url="http://example.com/versioned-listing",
-            address_street="Main Street",
-            address_number=123,
-            address_letter=None,
-            address_addition=None,
-            address_postal_code="1234AB",
-            address_city="Amsterdam",
+            address_thoroughfare="Main Street",
+            address_locator_designator_number=123,
+            address_locator_designator_letter=None,
+            address_locator_designator_addition=None,
+            address_post_code="1234AB",
+            address_post_name="Amsterdam",
             registration_number="REG123",
             number_of_guests=4,
             country_of_guests=["NLD"],
@@ -527,12 +536,12 @@ class TestActivityCRUD:
             platform_id=platform.id,
             area_id=area.id,
             url="http://example.com/versioned-listing-v2",
-            address_street="Main Street",
-            address_number=123,
-            address_letter=None,
-            address_addition=None,
-            address_postal_code="1234AB",
-            address_city="Amsterdam",
+            address_thoroughfare="Main Street",
+            address_locator_designator_number=123,
+            address_locator_designator_letter=None,
+            address_locator_designator_addition=None,
+            address_post_code="1234AB",
+            address_post_name="Amsterdam",
             registration_number="REG124",
             number_of_guests=5,
             country_of_guests=["NLD", "DEU"],

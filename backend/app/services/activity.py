@@ -93,12 +93,18 @@ async def create_activity(session: AsyncSession, activity_data: dict) -> Activit
         activity_id=activity_data.get("activity_id"),
         activity_name=activity_data.get("activity_name"),
         url=activity_data["url"],
-        address_street=activity_data["address_street"],
-        address_number=activity_data["address_number"],
-        address_letter=activity_data.get("address_letter"),
-        address_addition=activity_data.get("address_addition"),
-        address_postal_code=activity_data["address_postal_code"],
-        address_city=activity_data["address_city"],
+        address_thoroughfare=activity_data["address_thoroughfare"],
+        address_locator_designator_number=activity_data[
+            "address_locator_designator_number"
+        ],
+        address_locator_designator_letter=activity_data.get(
+            "address_locator_designator_letter"
+        ),
+        address_locator_designator_addition=activity_data.get(
+            "address_locator_designator_addition"
+        ),
+        address_post_code=activity_data["address_post_code"],
+        address_post_name=activity_data["address_post_name"],
         registration_number=activity_data["registration_number"],
         area_id=area.id,
         number_of_guests=activity_data["number_of_guests"],
@@ -191,12 +197,12 @@ async def get_activity_list(
             "platform_id": activity.platform.platform_id,  # Functional ID via relationship
             "platform_name": activity.platform.platform_name,  # Name via relationship
             "url": activity.url,
-            "address_street": activity.address_street,
-            "address_number": activity.address_number,
-            "address_letter": activity.address_letter,
-            "address_addition": activity.address_addition,
-            "address_postal_code": activity.address_postal_code,
-            "address_city": activity.address_city,
+            "address_thoroughfare": activity.address_thoroughfare,
+            "address_locator_designator_number": activity.address_locator_designator_number,
+            "address_locator_designator_letter": activity.address_locator_designator_letter,
+            "address_locator_designator_addition": activity.address_locator_designator_addition,
+            "address_post_code": activity.address_post_code,
+            "address_post_name": activity.address_post_name,
             "registration_number": activity.registration_number,
             "area_id": activity.area.area_id,  # Functional UUID via relationship
             "number_of_guests": activity.number_of_guests,

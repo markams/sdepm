@@ -10,6 +10,9 @@ class ErrorDetail(BaseModel):
 
     msg: str = Field(..., description="Human-readable error message")
     type: str = Field(..., description="Error type identifier")
+    loc: list[str | int] | None = Field(
+        default=None, description="Location of the error (e.g. ['body', 'fieldName'])"
+    )
 
 
 class ErrorResponse(BaseModel):

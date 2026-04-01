@@ -48,7 +48,7 @@ def empty_string_to_none(v: str | None) -> str | None:
 
 
 class AddressRequest(BaseModel):
-    """Address composite schema for activity requests.
+    """Address composite schema for activity requests (INSPIRE/STR-AP field names).
 
     Validation Layer:
     - All syntax validation (lengths, types, constraints) happens here
@@ -60,67 +60,75 @@ class AddressRequest(BaseModel):
         populate_by_name=True,  # Allow both snake_case and camelCase
     )
 
-    street: str = Field(
+    thoroughfare: str = Field(
         ...,
-        max_length=64,
-        description="Street name",
+        max_length=80,
+        description="Street / public space name",
         examples=["Prinsengracht"],
     )  # Attribute
 
-    number: int = Field(
+    locator_designator_number: int = Field(
         ...,
+        alias="locatorDesignatorNumber",
         ge=1,
-        description="House number",
+        description="Numeric house number component",
         examples=[263],
     )  # Attribute
 
-    letter: str | None = Field(
+    locator_designator_letter: str | None = Field(
         None,
-        max_length=1,
-        description="House letter (optional)",
+        alias="locatorDesignatorLetter",
+        max_length=10,
+        description="Letter/character suffix (optional, e.g. 'a', 'bis', 'ter')",
         examples=["a"],
     )  # Attribute
 
-    addition: str | None = Field(
+    locator_designator_addition: str | None = Field(
         None,
-        max_length=10,
-        description="House addition (optional)",
-        examples=["5h"],
+        alias="locatorDesignatorAddition",
+        max_length=128,
+        description="Additional qualifier (optional, e.g. 'II', 'Apt 3')",
+        examples=["II"],
     )  # Attribute
 
-    postal_code: str = Field(
+    post_code: str = Field(
         ...,
-        alias="postalCode",
+        alias="postCode",
         min_length=1,
-        max_length=8,
+        max_length=10,
         pattern=r"^[0-9A-Za-z]+$",
         description="Postal code (no spaces, alphanumeric)",
-        examples=["1016HV"],
+        examples=["1016GV"],
     )  # Attribute
 
-    city: str = Field(
+    post_name: str = Field(
         ...,
-        max_length=64,
-        description="City name",
+        alias="postName",
+        max_length=80,
+        description="City / town / village",
         examples=["Amsterdam"],
     )  # Attribute
 
-    @field_validator("letter")
+    @field_validator("locator_designator_letter")
     @classmethod
-    def validate_letter_is_alphabetic(cls, v: str | None) -> str | None:
-        """Validate letter contains only alphabetic characters."""
+    def validate_locator_designator_letter_is_alphabetic(
+        cls, v: str | None
+    ) -> str | None:
+        """Validate locator designator letter contains only alphabetic characters."""
         if v is not None and not v.isalpha():
-            raise ValueError("Letter must contain only alphabetic characters")
+            raise ValueError(
+                "Locator designator letter must contain only alphabetic characters"
+            )
         return v
 
-    @field_validator("postal_code")
+    @field_validator("post_code")
     @classmethod
-    def validate_postal_code_format(cls, v: str) -> str:
-        """Validate postal code has no spaces and is alphanumeric."""
+    def validate_post_code_format(cls, v: str) -> str:
+        """Validate post code has no spaces and is alphanumeric."""
         if " " in v:
-            raise ValueError("Postal code must not contain spaces")
+            raise ValueError("Post code must not contain spaces")
         if not v.isalnum():
-            raise ValueError("Postal code must be alphanumeric")
+            raise ValueError("Post code must be alphanumeric")
         return v
 
 
@@ -227,7 +235,7 @@ class ActivityRequest(BaseModel):
 
     address: AddressRequest = Field(
         ...,
-        description="Address composite containing street, number, postal code, and city",
+        description="Address composite (INSPIRE/STR-AP) containing thoroughfare, locatorDesignator sub-fields, postCode, and postName",
     )  # Composite
 
     registration_number: str = Field(
@@ -302,12 +310,12 @@ class ActivityRequest(BaseModel):
             "activity_name": self.activity_name,
             "url": self.url,
             "registration_number": self.registration_number,
-            "address_street": self.address.street,
-            "address_number": self.address.number,
-            "address_letter": self.address.letter,
-            "address_addition": self.address.addition,
-            "address_postal_code": self.address.postal_code,
-            "address_city": self.address.city,
+            "address_thoroughfare": self.address.thoroughfare,
+            "address_locator_designator_number": self.address.locator_designator_number,
+            "address_locator_designator_letter": self.address.locator_designator_letter,
+            "address_locator_designator_addition": self.address.locator_designator_addition,
+            "address_post_code": self.address.post_code,
+            "address_post_name": self.address.post_name,
             "temporal_start_date_time": self.temporal.start_date_time,
             "temporal_end_date_time": self.temporal.end_date_time,
             "area_id": self.area_id,
@@ -317,23 +325,35 @@ class ActivityRequest(BaseModel):
 
 
 class AddressResponse(BaseModel):
-    """Address composite schema for activity responses."""
+    """Address composite schema for activity responses (INSPIRE/STR-AP field names)."""
 
     model_config = ConfigDict(
         title="activity.AddressResponse",
         populate_by_name=True,
     )
 
-    street: str = Field(..., description="Street name")  # Attribute
-    number: int = Field(..., description="House number")  # Attribute
-    letter: str | None = Field(None, description="House letter (optional)")  # Attribute
-    addition: str | None = Field(
-        None, description="House addition (optional)"
+    thoroughfare: str = Field(
+        ..., description="Street / public space name"
     )  # Attribute
-    postalCode: str = Field(
-        ..., alias="postalCode", description="Postal code"
+    locatorDesignatorNumber: int = Field(
+        ...,
+        alias="locatorDesignatorNumber",
+        description="Numeric house number component",
     )  # Attribute
-    city: str = Field(..., description="City name")  # Attribute
+    locatorDesignatorLetter: str | None = Field(
+        None,
+        alias="locatorDesignatorLetter",
+        description="Letter/character suffix (optional)",
+    )  # Attribute
+    locatorDesignatorAddition: str | None = Field(
+        None,
+        alias="locatorDesignatorAddition",
+        description="Additional qualifier (optional)",
+    )  # Attribute
+    postCode: str = Field(..., alias="postCode", description="Postal code")  # Attribute
+    postName: str = Field(
+        ..., alias="postName", description="City / town / village"
+    )  # Attribute
 
 
 class TemporalResponse(BaseModel):

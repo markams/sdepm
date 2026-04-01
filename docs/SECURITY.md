@@ -53,22 +53,22 @@ For each request that matters, capture:
 
 The middleware derives a semantic action and resource type from the HTTP method and request path:
 
-| Method | Path pattern             | Resource type | Action   |
-| :----- | :----------------------- | :------------ | :------- |
-| POST   | `/*/ca/areas`            | `area`        | `create` |
-| GET    | `/*/ca/areas`            | `area`        | `list`   |
-| GET    | `/*/ca/areas/count`      | `area`        | `count`  |
-| GET    | `/*/ca/areas/{id}`       | `area`        | `read`   |
-| DELETE | `/*/ca/areas/{id}`       | `area`        | `delete` |
+| Method | Path pattern             | Resource type | Action        |
+| :----- | :----------------------- | :------------ | :------------ |
+| POST   | `/*/ca/areas`            | `area`        | `create`      |
+| GET    | `/*/ca/areas`            | `area`        | `list`        |
+| GET    | `/*/ca/areas/count`      | `area`        | `count`       |
+| GET    | `/*/ca/areas/{id}`       | `area`        | `read`        |
+| DELETE | `/*/ca/areas/{id}`       | `area`        | `delete`      |
 | POST   | `/*/str/activities/bulk` | `activity`    | `create_bulk` |
-| POST   | `/*/str/activities`      | `activity`    | `create` |
-| GET    | `/*/str/areas`           | `area`        | `list`   |
-| GET    | `/*/str/areas/count`     | `area`        | `count`  |
-| GET    | `/*/str/areas/{id}`      | `area`        | `read`   |
-| GET    | `/*/ca/activities`       | `activity`    | `list`   |
-| GET    | `/*/ca/activities/count` | `activity`    | `count`  |
-| POST   | `/*/auth/token`          | `auth`        | `token`  |
-| GET    | `/*/ping`                | `system`      | `ping`   |
+| POST   | `/*/str/activities`      | `activity`    | `create`      |
+| GET    | `/*/str/areas`           | `area`        | `list`        |
+| GET    | `/*/str/areas/count`     | `area`        | `count`       |
+| GET    | `/*/str/areas/{id}`      | `area`        | `read`        |
+| GET    | `/*/ca/activities`       | `activity`    | `list`        |
+| GET    | `/*/ca/activities/count` | `activity`    | `count`       |
+| POST   | `/*/auth/token`          | `auth`        | `token`       |
+| GET    | `/*/ping`                | `system`      | `ping`        |
 
 Unmatched paths fall back to action `unknown`.
 

@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 .PHONY: help up down restart status test test-quiet logs postgres-up postgres-down keycloak-up keycloak-down backend-up backend-down \
-        postgres-clean postgres-migrate postgres-clean-migrate postgres-load generate-area-sql .build .is-up .clean-stale .drop-database .migrate-database \
+        postgres-clean postgres-migrate postgres-clean-migrate-load postgres-load generate-area-sql .build .is-up .clean-stale .clean-database .migrate-database \
         .keycloak-wait .keycloak-realm .keycloak-admin .keycloak-roles .keycloak-machine-clients .get-client-credentials \
         .clean-testrun test-security test-str test-ca test-perf \
         postgres-login postgres-status postgres-status-full postgres-auditlog postgres-activity-count dbgate-up dbgate-down dbgate-restart dbgate-status dbgate-logs \
@@ -22,7 +22,7 @@ DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86
 	@echo "✅ Stale containers cleaned!"
 
 
-.drop-database: ## Drop database
+.clean-database: ## Drop database
 	@set -a && source .env && set +a && \
 	echo "🧹 Cleaning database $$POSTGRES_DB_NAME..." && \
 	docker exec -i sdep-postgres psql -U $$POSTGRES_SUPER_USER -d postgres < postgres/clean-app.sql
@@ -159,18 +159,13 @@ postgres-activity-count: ## Count activities in database
 
 postgres-clean: .clean-stale ## Clean postgres (drop tables)
 	@echo "🚀 Dropping sdep-database tables..."
-	@$(MAKE) --no-print-directory .drop-database
+	@$(MAKE) --no-print-directory .clean-database
 	@echo "✅ SDEP database cleaned!"
 
 postgres-migrate: ## Migrate postgres (create/update tables)
 	@echo "🚀 Migrating sdep-database..."
 	@$(MAKE) --no-print-directory .migrate-database
 	@echo "✅ SDEP database migrated!"
-
-postgres-clean-migrate: .clean-stale ## Clean postgres (drop + migrate)
-	@echo "🚀 Resetting sdep-database in postgres ..."
-	@$(MAKE) --no-print-directory .drop-database .migrate-database
-	@echo "✅ SDEP database reset!"
 
 postgres-load: ## Load test data
 	@echo "🐳 Initializing test data..."
@@ -185,6 +180,12 @@ postgres-load: ## Load test data
 		docker exec -i sdep-postgres psql -U $$POSTGRES_SUPER_USER -d $$POSTGRES_DB_NAME -v ON_ERROR_STOP=1 < "$$sql_file"; \
 	done
 	@echo "✅ Test data initialized"
+
+postgres-clean-migrate-load: .clean-stale ## Clean postgres (drop + migrate + load)
+	@echo "🚀 Resetting sdep-database in postgres ..."
+	@$(MAKE) --no-print-directory .clean-database .migrate-database
+	@$(MAKE) --no-print-directory postgres-load
+	@echo "✅ SDEP database reset and loaded!"
 
 postgres-logs: ## Show postgres logs
 	docker compose logs -f sdep-postgres
@@ -328,8 +329,7 @@ up: .build .clean-stale ## Start
 	@echo "✅ Keycloak configured!"
 
 	@echo "🚀 Initializing database..."
-	@$(MAKE) --no-print-directory postgres-clean-migrate
-	@$(MAKE) --no-print-directory postgres-load
+	@$(MAKE) --no-print-directory postgres-clean-migrate-load
 	@echo "✅ Database initialized!"
 
 	@echo "🚀 Showing stack status..."

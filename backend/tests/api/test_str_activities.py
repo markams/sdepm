@@ -116,10 +116,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/listing-001",
                     "registrationNumber": "REG123456",
                     "address": {
-                        "street": "Turfmarkt",
-                        "number": 147,
-                        "postalCode": "2500EA",
-                        "city": "Den Haag",
+                        "thoroughfare": "Turfmarkt",
+                        "locatorDesignatorNumber": 147,
+                        "postCode": "2500EA",
+                        "postName": "Den Haag",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -142,10 +142,10 @@ class TestSTRActivitiesAPI:
         assert data["competentAuthorityName"] == "Test Authority"
         assert data["url"] == "http://example.com/listing-001"
         assert data["registrationNumber"] == "REG123456"
-        assert data["address"]["street"] == "Turfmarkt"
-        assert data["address"]["number"] == 147
-        assert data["address"]["postalCode"] == "2500EA"
-        assert data["address"]["city"] == "Den Haag"
+        assert data["address"]["thoroughfare"] == "Turfmarkt"
+        assert data["address"]["locatorDesignatorNumber"] == 147
+        assert data["address"]["postCode"] == "2500EA"
+        assert data["address"]["postName"] == "Den Haag"
         assert data["temporal"]["startDatetime"] is not None
         assert data["temporal"]["endDatetime"] is not None
         assert data["countryOfGuests"] == ["NLD", "DEU", "BEL"]
@@ -174,10 +174,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/listing-with-id",
                     "registrationNumber": "REG123456",
                     "address": {
-                        "street": "Turfmarkt",
-                        "number": 147,
-                        "postalCode": "2500EA",
-                        "city": "Den Haag",
+                        "thoroughfare": "Turfmarkt",
+                        "locatorDesignatorNumber": 147,
+                        "postCode": "2500EA",
+                        "postName": "Den Haag",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -216,12 +216,12 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/listing-full",
                     "registrationNumber": "REGFULL",
                     "address": {
-                        "street": "Main Street",
-                        "number": 999,
-                        "postalCode": "5000CC",
-                        "city": "Utrecht",
-                        "letter": "B",
-                        "addition": "3rd floor",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 999,
+                        "postCode": "5000CC",
+                        "postName": "Utrecht",
+                        "locatorDesignatorLetter": "B",
+                        "locatorDesignatorAddition": "3rd floor",
                     },
                     "temporal": {
                         "startDatetime": "2025-07-01T14:00:00Z",
@@ -235,8 +235,8 @@ class TestSTRActivitiesAPI:
 
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["address"]["letter"] == "B"
-        assert data["address"]["addition"] == "3rd floor"
+        assert data["address"]["locatorDesignatorLetter"] == "B"
+        assert data["address"]["locatorDesignatorAddition"] == "3rd floor"
 
     async def test_post_activity_without_authentication(
         self, async_session: AsyncSession, setup_db_only
@@ -252,10 +252,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -298,10 +298,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-no-role",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -351,10 +351,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-no-client-id",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -386,10 +386,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "2500 EA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "2500 EA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -415,10 +415,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-07T14:00:00Z",
@@ -444,10 +444,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": "ABC",
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": "ABC",
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -473,11 +473,11 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "letter": "6",
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "locatorDesignatorLetter": "6",
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -503,11 +503,11 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "letter": "-",
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "locatorDesignatorLetter": "-",
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -533,10 +533,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000-AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000-AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -562,10 +562,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -592,10 +592,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -622,10 +622,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -652,10 +652,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -682,10 +682,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -712,10 +712,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2024-12-31T23:59:59Z",
@@ -740,10 +740,10 @@ class TestSTRActivitiesAPI:
                     "areaId": "some-area-id",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -769,10 +769,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-platform-from-token",
                     "registrationNumber": "REGTOKEN",
                     "address": {
-                        "street": "Test Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Test City",
+                        "thoroughfare": "Test Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Test City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -803,10 +803,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-nonexistent-area",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -838,10 +838,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-hex-hyphens",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -871,10 +871,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-alpha3-countries",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Main Street",
-                        "number": 123,
-                        "postalCode": "1000AA",
-                        "city": "Amsterdam",
+                        "thoroughfare": "Main Street",
+                        "locatorDesignatorNumber": 123,
+                        "postCode": "1000AA",
+                        "postName": "Amsterdam",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -904,10 +904,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/test-no-ended-at",
                     "registrationNumber": "REG123",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -940,10 +940,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/versioned-v1",
                     "registrationNumber": "REG-V1",
                     "address": {
-                        "street": "Street",
-                        "number": 1,
-                        "postalCode": "1000AA",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 1,
+                        "postCode": "1000AA",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-06-01T14:00:00Z",
@@ -966,10 +966,10 @@ class TestSTRActivitiesAPI:
                     "url": "http://example.com/versioned-v2",
                     "registrationNumber": "REG-V2",
                     "address": {
-                        "street": "Street",
-                        "number": 2,
-                        "postalCode": "2000BB",
-                        "city": "City",
+                        "thoroughfare": "Street",
+                        "locatorDesignatorNumber": 2,
+                        "postCode": "2000BB",
+                        "postName": "City",
                     },
                     "temporal": {
                         "startDatetime": "2025-07-01T14:00:00Z",

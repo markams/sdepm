@@ -51,13 +51,13 @@ router = APIRouter(tags=["str"])
 - `activityName`: Optional human-readable name for this activity (optional, max 64 chars)
 - `areaId`: Functional ID referencing the area where this activity took place (required; lowercase alphanumeric with hyphens `^[a-z0-9-]+$`, max 64 chars)
 - `url`: URL of the advertisement (required, max 128 chars)
-- `address`: Address composite (required):
-  - `street`: Street name (required, max 64 chars)
-  - `number`: House number (required, integer >= 1)
-  - `letter`: House letter (optional, exactly 1 alphabetic char)
-  - `addition`: House addition (optional, max 10 chars)
-  - `postalCode`: Postal code (required, alphanumeric, no spaces, max 8 chars)
-  - `city`: City name (required, max 64 chars)
+- `address`: Address composite (required, INSPIRE/STR-AP):
+  - `thoroughfare`: Street / public space name (required, max 80 chars)
+  - `locatorDesignatorNumber`: Numeric house number component (required, integer >= 1)
+  - `locatorDesignatorLetter`: Letter/character suffix (optional, max 10 chars, e.g. "a", "bis")
+  - `locatorDesignatorAddition`: Additional qualifier (optional, max 128 chars)
+  - `postCode`: Postal code (required, alphanumeric, no spaces, max 10 chars)
+  - `postName`: City / town / village (required, max 80 chars)
 - `registrationNumber`: Registration number for the address (required, max 32 chars)
 - `numberOfGuests`: Number of guests (optional, integer 1-1024 when provided)
 - `countryOfGuests`: Array of country codes of guests (optional, ISO 3166-1 alpha-3: exactly 3 uppercase letters per code, 1-1024 items when provided)
@@ -72,7 +72,7 @@ router = APIRouter(tags=["str"])
 - `competentAuthorityId`: Functional ID of the competent authority who owns the referenced area (convenience)
 - `competentAuthorityName`: Display name of the competent authority (convenience)
 - `url`: URL of the advertisement
-- `address`: Address composite (`street`, `number`, `letter`, `addition`, `postalCode`, `city`)
+- `address`: Address composite (`thoroughfare`, `locatorDesignatorNumber`, `locatorDesignatorLetter`, `locatorDesignatorAddition`, `postCode`, `postName`)
 - `registrationNumber`: Registration number for the address
 - `numberOfGuests`: Number of guests (optional)
 - `countryOfGuests`: Array of country codes of guests (optional)
@@ -97,10 +97,10 @@ router = APIRouter(tags=["str"])
                         "competentAuthorityName": "Gemeente Amsterdam",
                         "url": "http://example.com/amsterdam-myhouse-1",
                         "address": {
-                            "street": "Prinsengracht",
-                            "number": 263,
-                            "postalCode": "1016HV",
-                            "city": "Amsterdam",
+                            "thoroughfare": "Prinsengracht",
+                            "locatorDesignatorNumber": 263,
+                            "postCode": "1016GV",
+                            "postName": "Amsterdam",
                         },
                         "registrationNumber": "REG0001",
                         "numberOfGuests": 4,
@@ -193,12 +193,12 @@ async def post_activity(
         competentAuthorityName=activity_obj.area.competent_authority.competent_authority_name,
         url=activity_obj.url,
         address=AddressResponse(
-            street=activity_obj.address_street,
-            number=activity_obj.address_number,
-            letter=activity_obj.address_letter,
-            addition=activity_obj.address_addition,
-            postalCode=activity_obj.address_postal_code,
-            city=activity_obj.address_city,
+            thoroughfare=activity_obj.address_thoroughfare,
+            locatorDesignatorNumber=activity_obj.address_locator_designator_number,
+            locatorDesignatorLetter=activity_obj.address_locator_designator_letter,
+            locatorDesignatorAddition=activity_obj.address_locator_designator_addition,
+            postCode=activity_obj.address_post_code,
+            postName=activity_obj.address_post_name,
         ),
         registrationNumber=activity_obj.registration_number,
         numberOfGuests=activity_obj.number_of_guests,

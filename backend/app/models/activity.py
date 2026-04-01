@@ -142,13 +142,19 @@ class Activity(Base):
         String(128), nullable=False
     )  # Mandatory, for example "http://example.com/my-advertisement"
 
-    # Composite attributes - Address
-    address_street: Mapped[str] = mapped_column(String(64), nullable=False)
-    address_number: Mapped[int] = mapped_column(Integer, nullable=False)
-    address_letter: Mapped[str | None] = mapped_column(String(1), nullable=True)
-    address_addition: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    address_postal_code: Mapped[str] = mapped_column(String(8), nullable=False)
-    address_city: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Composite attributes - Address (INSPIRE/STR-AP field names)
+    address_thoroughfare: Mapped[str] = mapped_column(String(80), nullable=False)
+    address_locator_designator_number: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )
+    address_locator_designator_letter: Mapped[str | None] = mapped_column(
+        String(10), nullable=True
+    )
+    address_locator_designator_addition: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
+    address_post_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    address_post_name: Mapped[str] = mapped_column(String(80), nullable=False)
 
     registration_number: Mapped[str] = mapped_column(
         String(32), nullable=False
@@ -181,12 +187,12 @@ class Activity(Base):
     # Composites
     address: Mapped[Address] = composite(
         Address,
-        address_street,
-        address_number,
-        address_letter,
-        address_addition,
-        address_postal_code,
-        address_city,
+        address_thoroughfare,
+        address_locator_designator_number,
+        address_locator_designator_letter,
+        address_locator_designator_addition,
+        address_post_code,
+        address_post_name,
     )
     temporal: Mapped[Temporal] = composite(
         Temporal, temporal_start_date_time, temporal_end_date_time

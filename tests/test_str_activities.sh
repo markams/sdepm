@@ -72,10 +72,10 @@ read -r -d '' PAYLOAD <<EOF || true
   "url": "http://sdep-test.example.com/amsterdam-myhouse-1",
   "registrationNumber": "REG0002",
   "address": {
-    "street": "Prinsengracht",
-    "number": 265,
-    "postalCode": "1016HV",
-    "city": "Amsterdam"
+    "thoroughfare": "Prinsengracht",
+    "locatorDesignatorNumber": 265,
+    "postCode": "1016HV",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME",
@@ -152,10 +152,10 @@ if [ -n "$BEARER_TOKEN" ]; then
   "url": "http://sdep-test.example.com/amsterdam-with-id-$UNIQUE_ID",
   "registrationNumber": "REGID001",
   "address": {
-    "street": "Prinsengracht",
-    "number": 267,
-    "postalCode": "1016HV",
-    "city": "Amsterdam"
+    "thoroughfare": "Prinsengracht",
+    "locatorDesignatorNumber": 267,
+    "postCode": "1016HV",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME_2",
@@ -219,10 +219,10 @@ if [ -n "$BEARER_TOKEN" ]; then
 {
   "url": "http://sdep-test.example.com/amsterdam-invalid",
   "address": {
-    "street": "Prinsengracht",
-    "number": 999,
-    "postalCode": "1016HV",
-    "city": "Amsterdam"
+    "thoroughfare": "Prinsengracht",
+    "locatorDesignatorNumber": 999,
+    "postCode": "1016HV",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME_3",
@@ -276,10 +276,10 @@ if [ -n "$BEARER_TOKEN" ]; then
   "url": "http://sdep-test.example.com/amsterdam-bad-country",
   "registrationNumber": "REGBADCC",
   "address": {
-    "street": "Prinsengracht",
-    "number": 999,
-    "postalCode": "1016HV",
-    "city": "Amsterdam"
+    "thoroughfare": "Prinsengracht",
+    "locatorDesignatorNumber": 999,
+    "postCode": "1016HV",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME_3B",
@@ -335,10 +335,10 @@ if [ -n "$BEARER_TOKEN" ]; then
   "url": "http://sdep-test.example.com/bad-area-$UNIQUE_ID",
   "registrationNumber": "REGBAD001",
   "address": {
-    "street": "Bad Area Street",
-    "number": 200,
-    "postalCode": "2000BB",
-    "city": "Nowhere"
+    "thoroughfare": "Bad Area Street",
+    "locatorDesignatorNumber": 200,
+    "postCode": "2000BB",
+    "postName": "Nowhere"
   },
   "temporal": {
     "startDatetime": "$START_TIME_4",
@@ -398,10 +398,10 @@ if [ -n "$BEARER_TOKEN" ]; then
   "url": "http://sdep-test.example.com/versioned-v1-$(date +%s%N | cut -b1-13)",
   "registrationNumber": "REGV1",
   "address": {
-    "street": "Versioned Street",
-    "number": 1,
-    "postalCode": "1000AA",
-    "city": "Amsterdam"
+    "thoroughfare": "Versioned Street",
+    "locatorDesignatorNumber": 1,
+    "postCode": "1000AA",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME_V",
@@ -429,10 +429,10 @@ EOF
   "url": "http://sdep-test.example.com/versioned-v2-$(date +%s%N | cut -b1-13)",
   "registrationNumber": "REGV2",
   "address": {
-    "street": "Versioned Street",
-    "number": 2,
-    "postalCode": "2000BB",
-    "city": "Amsterdam"
+    "thoroughfare": "Versioned Street",
+    "locatorDesignatorNumber": 2,
+    "postCode": "2000BB",
+    "postName": "Amsterdam"
   },
   "temporal": {
     "startDatetime": "$START_TIME_V2",

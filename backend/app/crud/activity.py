@@ -18,12 +18,12 @@ async def create(
     platform_id: int,
     area_id: int,
     url: str,
-    address_street: str,
-    address_number: int,
-    address_letter: str | None,
-    address_addition: str | None,
-    address_postal_code: str,
-    address_city: str,
+    address_thoroughfare: str,
+    address_locator_designator_number: int,
+    address_locator_designator_letter: str | None,
+    address_locator_designator_addition: str | None,
+    address_post_code: str,
+    address_post_name: str,
     registration_number: str,
     number_of_guests: int | None,
     country_of_guests: list[str] | None,
@@ -40,12 +40,12 @@ async def create(
         platform_id: Platform id (foreign key to Platform, mandatory)
         area_id: Area id (foreign key to Area, mandatory, integer)
         url: URL (128 characters, mandatory)
-        address_street: Address street (mandatory, max 64 chars)
-        address_number: Address number (mandatory)
-        address_letter: Address letter (optional)
-        address_addition: Address addition (optional)
-        address_postal_code: Address postal code (mandatory, max 8 chars)
-        address_city: Address city (mandatory, max 64 chars)
+        address_thoroughfare: Street / public space name (mandatory, max 80 chars)
+        address_locator_designator_number: Numeric house number (mandatory)
+        address_locator_designator_letter: Letter/character suffix (optional, max 10 chars)
+        address_locator_designator_addition: Additional qualifier (optional, max 128 chars)
+        address_post_code: Postal code (mandatory, max 10 chars)
+        address_post_name: City / town / village (mandatory, max 80 chars)
         registration_number: Registration number (mandatory, max 32 chars)
         number_of_guests: Number of guests (optional)
         country_of_guests: Array of country codes (optional)
@@ -61,12 +61,12 @@ async def create(
         platform_id=platform_id,
         area_id=area_id,
         url=url,
-        address_street=address_street,
-        address_number=address_number,
-        address_letter=address_letter,
-        address_addition=address_addition,
-        address_postal_code=address_postal_code,
-        address_city=address_city,
+        address_thoroughfare=address_thoroughfare,
+        address_locator_designator_number=address_locator_designator_number,
+        address_locator_designator_letter=address_locator_designator_letter,
+        address_locator_designator_addition=address_locator_designator_addition,
+        address_post_code=address_post_code,
+        address_post_name=address_post_name,
         registration_number=registration_number,
         number_of_guests=number_of_guests,
         country_of_guests=country_of_guests,

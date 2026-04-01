@@ -73,7 +73,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-ok1-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-ok1",
       "registrationNumber": "REGBULK001",
-      "address": {"street": "Prinsengracht", "number": 265, "postalCode": "1016HV", "city": "Amsterdam"},
+      "address": {"thoroughfare": "Prinsengracht", "locatorDesignatorNumber": 265, "postCode": "1016HV", "postName": "Amsterdam"},
       "temporal": {"startDatetime": "$START_TIME", "endDatetime": "$END_TIME"},
       "areaId": "$AREA_ID_1",
       "numberOfGuests": 4
@@ -82,7 +82,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-ok2-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-ok2",
       "registrationNumber": "REGBULK002",
-      "address": {"street": "Keizersgracht", "number": 100, "postalCode": "1015AA", "city": "Amsterdam"},
+      "address": {"thoroughfare": "Keizersgracht", "locatorDesignatorNumber": 100, "postCode": "1015AA", "postName": "Amsterdam"},
       "temporal": {"startDatetime": "$START_TIME", "endDatetime": "$END_TIME"},
       "areaId": "$AREA_ID_2",
       "numberOfGuests": 2
@@ -139,7 +139,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-partial1-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-partial1",
       "registrationNumber": "REGPART001",
-      "address": {"street": "Prinsengracht", "number": 265, "postalCode": "1016HV", "city": "Amsterdam"},
+      "address": {"thoroughfare": "Prinsengracht", "locatorDesignatorNumber": 265, "postCode": "1016HV", "postName": "Amsterdam"},
       "temporal": {"startDatetime": "$START_TIME_2", "endDatetime": "$END_TIME_2"},
       "areaId": "$AREA_ID_1",
       "numberOfGuests": 4
@@ -148,7 +148,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-partial2-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-partial2",
       "registrationNumber": "REGPART002",
-      "address": {"street": "Bad Street", "number": 1, "postalCode": "0000AA", "city": "Nowhere"},
+      "address": {"thoroughfare": "Bad Street", "locatorDesignatorNumber": 1, "postCode": "0000AA", "postName": "Nowhere"},
       "temporal": {"startDatetime": "$START_TIME_2", "endDatetime": "$END_TIME_2"},
       "areaId": "nonexistent-area-id",
       "numberOfGuests": 2
@@ -205,7 +205,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-fail1-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-fail1",
       "registrationNumber": "REGFAIL001",
-      "address": {"street": "Bad Street", "number": 1, "postalCode": "0000AA", "city": "Nowhere"},
+      "address": {"thoroughfare": "Bad Street", "locatorDesignatorNumber": 1, "postCode": "0000AA", "postName": "Nowhere"},
       "temporal": {"startDatetime": "$START_TIME_3", "endDatetime": "$END_TIME_3"},
       "areaId": "nonexistent-area-1"
     },
@@ -213,7 +213,7 @@ if [ -n "$BEARER_TOKEN" ]; then
       "activityId": "sdep-test-bulk-fail2-$TIMESTAMP",
       "url": "http://sdep-test.example.com/bulk-fail2",
       "registrationNumber": "REGFAIL002",
-      "address": {"street": "Bad Street", "number": 2, "postalCode": "0000BB", "city": "Nowhere"},
+      "address": {"thoroughfare": "Bad Street", "locatorDesignatorNumber": 2, "postCode": "0000BB", "postName": "Nowhere"},
       "temporal": {"startDatetime": "$START_TIME_3", "endDatetime": "$END_TIME_3"},
       "areaId": "nonexistent-area-2"
     }
