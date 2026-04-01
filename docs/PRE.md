@@ -1,33 +1,35 @@
-# SDEP NL - PRE
+<h1>SDEP NL - PRE</h1>
 
 Welcome to the **SDEP NL pre-production environment (PRE)**.
 
 https://pre-sdep.minvro.nl/api/v0/docs
 
-- [SDEP NL - PRE](#sdep-nl-pre)
-  - [Introduction](#introduction)
-  - [Background](#background)
-    - [Supported roles](#supported-roles)
-  - [Call for action](#call-for-action)
+ Table of contents
 
+- [Introduction](#introduction)
+- [Reference vs. operational](#reference-vs-operational)
+- [Background](#background)
+- [Roles](#roles)
+- [Get access](#get-access)
 
 ## Introduction
 
-PRE enables **integration partners** to test their integrations with SDEP.
+The PRE enables **integration partners** to test their integrations with SDEP.
 
 - As an integration partner, you can request **test accounts for SDEP NL**.
 - Supported roles include **Competent Authorities (CA)** and **Short-Term Rental Platforms (STR)**
-
 
 In PRE, you are supposed to use **only anonimized data**.
 
 - Nonetheless, PRE is **cleaned daily** to remove any potential residual production test data
 
-Finally, note that although SDEP NL serves as a common **EU reference implementation**, the environment itself is operated specifically for **the Netherlands (NL)**.
+## Reference vs. operational
 
-For **production use** in your country, always contact your **country-specific SDEP representative** regarding the SDEP deployment in your country.
+SDEP NL acts as a shared EU reference implementation.
 
----
+However, the environment itself is operated specifically for the Netherlands
+
+For production use in your own country, you should always contact your **national SDEP representative** regarding deployment and operations.
 
 ## Background
 
@@ -42,7 +44,7 @@ In accordance with **EU legislation**, SDEP enables the following:
 
 > *Support for flagged listings is currently under development.*
 
-### Supported roles
+## Roles
 
 SDEP currently supports two roles:
 
@@ -53,7 +55,7 @@ SDEP currently supports two roles:
 
 ---
 
-## Call for action
+## Get access
 
 Test accounts represent **client machines** operating under either the **STR** or **CA** role. \
 These accounts allow you to **test all supported SDEP use cases**.
