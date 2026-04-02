@@ -164,30 +164,24 @@ Diagram:
 
 **Purpose:** Append-only log of API requests for compliance, security monitoring, and operational accountability
 
-| Attribute        | Type     | Constraints                                   |
-| :--------------- | :------- | :-------------------------------------------- |
-| **id**           | int      | is technical id, mandatory                    |
-| **timestamp**    | datetime | mandatory, UTC, server default now()          |
-| **requestId**    | string   | mandatory, UUID4, length <= 64                |
-| **clientId**     | string   | nullable, length <= 64, from JWT client_id    |
-| **clientName**   | string   | nullable, length <= 64, from JWT client_name  |
-| **roles**        | string   | nullable, length <= 256, comma-separated      |
-| **action**       | string   | mandatory, length <= 64, semantic action name |
-| **resourceType** | string   | nullable, length <= 32                        |
-| **resourceId**   | string   | nullable, length <= 64                        |
-| **httpMethod**   | string   | mandatory, length <= 10                       |
-| **path**         | string   | mandatory, length <= 512                      |
-| **queryParams**  | string   | nullable, length <= 512                       |
-| **statusCode**   | int      | mandatory                                     |
-| **success**      | bool     | mandatory                                     |
-| **clientIp**     | string   | nullable, length <= 45                        |
-| **userAgent**    | string   | nullable, length <= 256                       |
-| **durationMs**   | int      | nullable                                      |
+| Attribute          | Type     | Constraints                                       |
+| :----------------- | :------- | :------------------------------------------------ |
+| **id**             | int      | is technical id, mandatory                        |
+| **timestamp**      | datetime | mandatory, UTC, server default now()              |
+| **requestId**      | string   | mandatory, UUID4, length <= 64                    |
+| **roles**          | string   | nullable, length <= 256, comma-separated from JWT |
+| **resourceType**   | string   | nullable, length <= 32                            |
+| **action**         | string   | mandatory, length <= 64, semantic action name     |
+| **httpMethod**     | string   | mandatory, length <= 10                           |
+| **path**           | string   | mandatory, length <= 512                          |
+| **httpStatusCode** | int      | mandatory                                         |
+| **statusCode**     | string   | mandatory, length <= 3, "OK" if < 400 else "NOK"  |
+| **durationMs**     | int      | nullable                                          |
 
 **Notes:**
 - Append-only: no updates or deletes (except automated retention cleanup)
 - Standalone table with no foreign key relationships
-- Indexes on: `timestamp`, `request_id`, `client_id`
+- Indexes on: `timestamp`, `request_id`
 - **Retention:** rows older than `AUDITLOG_RETENTION` days (default 1) are automatically deleted by a background task
 
 ---
