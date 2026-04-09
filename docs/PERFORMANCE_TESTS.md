@@ -4,6 +4,9 @@ The [../tests/perf](../tests/perf) directory contains a [Locust](https://locust.
 
 - [Running Performance Tests](#running-performance-tests)
 - [Implementation](#implementation)
+  - [Locust test](#locust-test)
+  - [Test data generation](#test-data-generation)
+  - [Test data cleanup](#test-data-cleanup)
 - [Results](#results)
 - [Benchmarks](#benchmarks)
 - [Database tuning](#database-tuning)
@@ -21,7 +24,6 @@ The [../tests/perf](../tests/perf) directory contains a [Locust](https://locust.
   - [Error budgets for batch processing](#error-budgets-for-batch-processing)
   - [Summary: SLI measurement gaps](#summary-sli-measurement-gaps)
 
-
 ## Running Performance Tests
 
 See [../Makefile](../Makefile). The Makefile delegates to [../scripts/run-tests-perf.sh](../scripts/run-tests-perf.sh).
@@ -32,9 +34,16 @@ Quick reference:
 | ---------------- | ------------------------------------------------------------ |
 | `make test-perf` | Run bulk performance test with various configuration options |
 
-To run against a Kubernetes environment (TST, ACC, PRE, PRD), use the equivalent targets in `sdep-deployment` (e.g. `make test-perf-tst`).
-
 ## Implementation
+
+The performance test consists of two files:
+
+- [`scripts/run-tests-perf.sh`](../scripts/run-tests-perf.sh) orchestrates configuration, fixture setup, the Locust run, and cleanup
+- [`tests/perf/locustfile.py`](../tests/perf/locustfile.py) contains the actual load test logic
+
+Both are invoked via `make test-perf`.
+
+### Locust test
 
 `perf/locustfile.py`
 
@@ -54,7 +63,49 @@ To run against a Kubernetes environment (TST, ACC, PRE, PRD), use the equivalent
 2. Spawns `PERF_USERS` concurrent Locust users (default: 10), ramping up at `PERF_RAMP_UP` users/second
 3. Each Locust user authenticates at start and re-authenticates automatically when the bearer token expires (HTTP 401), then repeatedly submits bulk requests (0.1-0.5s pause between requests)
 4. After the configured duration, Locust prints per-endpoint statistics and the custom summary block
+5. Unless `PERF_KEEP_DATA=true`, the script runs `postgres/clean-testrun.sql` to remove all test data from the database
 
+**Note on wait time and measurements:** The 0.1–0.5s pause between requests (Locust `wait_time`) adds to the total wall-clock duration but does **not** affect per-request response time statistics (avg, p50, p95, p99). It does slightly reduce measured throughput (activities/sec) compared to a zero-wait scenario, because each user idles between requests.
+
+### Test data generation
+
+No fixture files are used — all test data is generated at runtime by `_generate_activity()` in `locustfile.py`. Each Locust task iteration generates `PERF_BATCH_SIZE` activities (default: 500) per HTTP request.
+
+Each activity contains the following fields:
+
+| Field                | How it is generated                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `activityId`         | Prefix + 12 random hex characters from `uuid4`. Prefix is `sdep-test-perf-` (throwaway) or `perf-` when `PERF_KEEP_DATA=true` |
+| `url`                | Fake URL using the same unique ID (e.g. `http://sdep-test-perf.example.com/<id>`)                            |
+| `registrationNumber` | `REGPERF` + 8 uppercase hex characters                                                                       |
+| `address`            | Random Dutch street name (`Prinsengracht`, `Keizersgracht`, etc.), house number (1–999), postcode, and city from hardcoded lists |
+| `temporal`           | `startDatetime` = current UTC timestamp; `endDatetime` = fixed (`2027-12-31T23:59:59Z`)                      |
+| `areaId`             | Randomly picked from `PERF_AREA_IDS` (created by the Makefile via `lib/create_fixture_areas.sh`)             |
+| `numberOfGuests`     | Random integer 1–10                                                                                          |
+| `countryOfGuests`    | Random 1–3 ISO country codes from a fixed set (`NLD`, `DEU`, `BEL`, `FRA`, `GBR`, `ESP`, `ITA`, `USA`)      |
+
+The `activityId` prefix convention controls cleanup:
+
+- IDs starting with `sdep-test-perf-` are treated as throwaway test data and cleaned up after the test run
+- When `PERF_KEEP_DATA=true`, the prefix is `perf-` and data is retained in the database.
+
+### Test data cleanup
+
+After the Locust run completes, `scripts/run-tests-perf.sh` automatically cleans up test data unless `PERF_KEEP_DATA=true`.
+
+Cleanup executes `postgres/clean-testrun.sql` via `docker exec psql`, which:
+
+1. **Deletes activities** in batches of 10,000 rows where `activity_id LIKE 'sdep-test-%'` or the activity belongs to an area matching `sdep-test-%`. Batched deletes avoid long-running transactions that could time out under load.
+2. **Deletes areas** linked to `sdep-test-%` area IDs or `sdep-test-%` competent authorities.
+3. **Deletes platforms** with `sdep-test-%` platform IDs.
+4. **Deletes competent authorities** with `sdep-test-%` IDs.
+
+Deletion follows FK order: children (activities) first, then parents (areas, platforms, competent authorities).
+
+The same cleanup SQL is used by `make .clean-testrun` for all test types (integration and performance), since all test data shares the `sdep-test-*` naming convention.
+
+- When `PERF_KEEP_DATA=true`, the activity ID prefix switches to `perf-` (without the `sdep-test-` prefix)
+- So those records are not matched by the cleanup query and survive in the database
 
 ## Results
 
@@ -204,7 +255,7 @@ Each layer enforces its own timeouts. A bulk request that takes several seconds 
 
 ### Recommendation
 
-Apply all three: client-side retry absorbs occasional hiccups regardless of infrastructure, while the proxy and load balancer timeouts prevent the hiccups from occurring in the first place. The proxy and load balancer changes are deployment-level configuration managed in `sdep-deployment`.
+Apply all three: client-side retry absorbs occasional hiccups regardless of infrastructure, while the proxy and load balancer timeouts prevent the hiccups from occurring in the first place. The proxy and load balancer changes are deployment-level configuration managed (out of scope of this project).
 
 
 ## Service Level Objectives (SLO)

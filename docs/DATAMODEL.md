@@ -41,14 +41,14 @@ Diagram:
 
 **Purpose:** Regulates short-term rental in geographic areas
 
-| Attribute                  | Type      | Constraints                                                                                           |
-| :------------------------- | :-------- | :---------------------------------------------------------------------------------------------------- |
-| **id**                     | int       | is technical id, mandatory                                                                            |
-| **competentAuthorityId**   | string    | is functional id, mandatory, length <= 64, lowercase alphanumeric, is auto-provisioned from JWT claim |
-| **competentAuthorityName** | string    | optional, length <= 64, e.g. "Gemeente Amsterdam"                                                     |
-| **createdAt**              | datetime  | mandatory, UTC                                                                                        |
-| **endedAt**                | datetime  | optional, UTC                                                                                         |
-| **areas**                  | reference | optional, references Area                                                                             |
+| Attribute                  | Type      | Constraints                                                                                             |
+| :------------------------- | :-------- | :------------------------------------------------------------------------------------------------------ |
+| **id**                     | int       | is technical id, mandatory                                                                              |
+| **competentAuthorityId**   | string    | is functional id, mandatory, length <= 64, alphanumeric with hypens, is auto-provisioned from JWT claim |
+| **competentAuthorityName** | string    | optional, length <= 64, e.g. "Gemeente Amsterdam"                                                       |
+| **createdAt**              | datetime  | mandatory, UTC                                                                                          |
+| **endedAt**                | datetime  | optional, UTC                                                                                           |
+| **areas**                  | reference | optional, references Area                                                                               |
 
 **Class Constraints:**
 
@@ -60,14 +60,14 @@ Diagram:
 
 **Purpose:** Delivers rental activities to competent authorities
 
-| Attribute        | Type      | Constraints                                                                                           |
-| :--------------- | :-------- | :---------------------------------------------------------------------------------------------------- |
-| **id**           | int       | is technical id, mandatory                                                                            |
-| **platformId**   | string    | is functional id, mandatory, length <= 64, lowercase alphanumeric, is auto-provisioned from JWT claim |
-| **platformName** | string    | optional, length <= 64, e.g. "Example platform"                                                       |
-| **createdAt**    | datetime  | mandatory, UTC                                                                                        |
-| **endedAt**      | datetime  | optional, UTC                                                                                         |
-| **activities**   | reference | optional, references many Activity                                                                    |
+| Attribute        | Type      | Constraints                                                                                             |
+| :--------------- | :-------- | :------------------------------------------------------------------------------------------------------ |
+| **id**           | int       | is technical id, mandatory                                                                              |
+| **platformId**   | string    | is functional id, mandatory, length <= 64, alphanumeric with hypens, is auto-provisioned from JWT claim |
+| **platformName** | string    | optional, length <= 64, e.g. "Example platform"                                                         |
+| **createdAt**    | datetime  | mandatory, UTC                                                                                          |
+| **endedAt**      | datetime  | optional, UTC                                                                                           |
+| **activities**   | reference | optional, references many Activity                                                                      |
 
 **Class Constraints:**
 
@@ -79,17 +79,17 @@ Diagram:
 
 **Purpose:** Defines a geographic region for short-term rental regulation
 
-| Attribute              | Type        | Constraints                                                                                                             |
-| :--------------------- | :---------- | :---------------------------------------------------------------------------------------------------------------------- |
-| **id**                 | int         | is technical id, mandatory                                                                                              |
-| **areaId**             | string      | is functional id, mandatory, length <= 64, lowercase alphanumeric, is supplied or auto-provisioned otherwise (RFC 6749) |
-| **areaName**           | string      | optional, length <= 64, e.g. "Amsterdam-Noord"                                                                          |
-| **createdAt**          | datetime    | mandatory, UTC                                                                                                          |
-| **endedAt**            | datetime    | optional, UTC                                                                                                           |
-| **competentAuthority** | reference   | mandatory, references single Competent Authority                                                                        |
-| **filename**           | string      | mandatory, length <= 64, e.g. "Amsterdam.zip"                                                                           |
-| **filedata**           | largeBinary | mandatory, max size 1MiB, e.g. a .zip with a collection of ESRI shapefile files                                         |
-| **activities**         | reference   | optional, references many Activity                                                                                      |
+| Attribute              | Type        | Constraints                                                                                                                         |
+| :--------------------- | :---------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| **id**                 | int         | is technical id, mandatory                                                                                                          |
+| **areaId**             | string      | is functional id, mandatory, length <= 64, lowercase alphanumeric, is supplied or auto-provisioned otherwise (RFC 9562/4122 UUIDv4) |
+| **areaName**           | string      | optional, length <= 64, e.g. "Amsterdam-Noord"                                                                                      |
+| **createdAt**          | datetime    | mandatory, UTC                                                                                                                      |
+| **endedAt**            | datetime    | optional, UTC                                                                                                                       |
+| **competentAuthority** | reference   | mandatory, references single Competent Authority                                                                                    |
+| **filename**           | string      | mandatory, length <= 64, e.g. "Amsterdam.zip"                                                                                       |
+| **filedata**           | largeBinary | mandatory, max size 1MiB, e.g. a .zip with a collection of ESRI shapefile files                                                     |
+| **activities**         | reference   | optional, references many Activity                                                                                                  |
 
 **Class Constraints:**
 
@@ -97,7 +97,7 @@ Diagram:
 
 **Notes:**
 - The same `areaId` (business identifier, optional) can be resubmitted to create new versions with different timestamps
-- The UNIQUE class constraint allows the same `areaId` to be used (owned) by multiple comnpetent authorities
+- The UNIQUE class constraint allows the same `areaId` to be used (owned) by multiple competent authorities
 
 ---
 
@@ -105,21 +105,21 @@ Diagram:
 
 **Purpose:** Represents an actual rental activity submitted by a platform
 
-| Attribute              | Type            | Constraints                                                                                                             |
-| :--------------------- | :-------------- | :---------------------------------------------------------------------------------------------------------------------- |
-| **id**                 | int             | is technical id, mandatory                                                                                              |
-| **activityId**         | string          | is functional id, mandatory, length <= 64, lowercase alphanumeric, is supplied or auto-provisioned otherwise (RFC 6749) |
-| **activityName**       | string          | optional, length <= 64, e.g. "Summer rental"                                                                            |
-| **createdAt**          | datetime        | mandatory, UTC                                                                                                          |
-| **endedAt**            | datetime        | optional, UTC                                                                                                           |
-| **platform**           | reference       | mandatory, references single Platform                                                                                   |
-| **area**               | reference       | mandatory, references single Area                                                                                       |
-| **url**                | string          | mandatory, length <= 128, e.g. http://example.com/my-advertisement                                                      |
-| **address**            | reference       | mandatory, references single Address composite                                                                          |
-| **registrationNumber** | string          | mandatory, length <= 32                                                                                                 |
-| **numberOfGuests**     | int             | optional, min 1, max 1024                                                                                               |
-| **countryOfGuests**    | array of string | optional, min 1, max 1024, each ISO 3166-1 alpha-3                                                                      |
-| **temporal**           | reference       | mandatory, references single Temporal composite                                                                         |
+| Attribute              | Type            | Constraints                                                                                                                           |
+| :--------------------- | :-------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| **id**                 | int             | is technical id, mandatory                                                                                                            |
+| **activityId**         | string          | is functional id, mandatory, length <= 64, alphanumeric with hypens, is supplied or auto-provisioned otherwise (RFC 9562/4122 UUIDv4) |
+| **activityName**       | string          | optional, length <= 64, e.g. "Summer rental"                                                                                          |
+| **createdAt**          | datetime        | mandatory, UTC                                                                                                                        |
+| **endedAt**            | datetime        | optional, UTC                                                                                                                         |
+| **platform**           | reference       | mandatory, references single Platform                                                                                                 |
+| **area**               | reference       | mandatory, references single Area                                                                                                     |
+| **url**                | string          | mandatory, length <= 128, e.g. http://example.com/my-advertisement                                                                    |
+| **address**            | reference       | mandatory, references single Address composite                                                                                        |
+| **registrationNumber** | string          | mandatory, length <= 32                                                                                                               |
+| **numberOfGuests**     | int             | optional, min 1, max 1024                                                                                                             |
+| **countryOfGuests**    | array of string | optional, min 1, max 1024, each ISO 3166-1 alpha-3                                                                                    |
+| **temporal**           | reference       | mandatory, references single Temporal composite                                                                                       |
 
 **Class Constraints:**
 
@@ -205,7 +205,7 @@ Functional IDs
   - Exception: `platformId` and `competentAuthorityId` (these are auto-provisioned from JWT-claim)
 - After a POST, functional IDs are always returned/made visible
 - This allows them to be reused in subsequent submissions
-- Functional IDs enable versioning (in combination with a timstamp)
+- Functional IDs enable versioning (in combination with a timestamp)
 
 https://datatracker.ietf.org/doc/rfc9562/
 

@@ -25,6 +25,7 @@ from app.schemas.activity import (
     AddressResponse,
     TemporalResponse,
 )
+from app.schemas.common import validate_functional_id
 from app.schemas.error import ErrorResponse
 from app.security import verify_bearer_token
 from app.services import activity as activity_service
@@ -47,9 +48,9 @@ router = APIRouter(tags=["str"])
 - Unique constraint: (activityId, createdAt, current authenticated platform)
 
 **The request contains:**
-- `activityId`: Functional ID identifying this activity (optional, auto-generated UUID if not provided; lowercase alphanumeric with hyphens `^[a-z0-9-]+$`, max 64 chars)
+- `activityId`: Functional ID identifying this activity (optional, auto-generated UUID if not provided; alphanumeric with hyphens `^[A-Za-z0-9-]+$`, max 64 chars)
 - `activityName`: Optional human-readable name for this activity (optional, max 64 chars)
-- `areaId`: Functional ID referencing the area where this activity took place (required; lowercase alphanumeric with hyphens `^[a-z0-9-]+$`, max 64 chars)
+- `areaId`: Functional ID referencing the area where this activity took place (required; alphanumeric with hyphens `^[A-Za-z0-9-]+$`, max 64 chars)
 - `url`: URL of the advertisement (required, max 128 chars)
 - `address`: Address composite (required, INSPIRE/STR-AP):
   - `thoroughfare`: Street / public space name (required, max 80 chars)
@@ -157,7 +158,7 @@ async def post_activity(
             detail="Access forbidden: 'sdep_write' role required",
         )
 
-    # Extract platform ID and name from token
+    # Extract and validate platform ID and name from token
     platform_id = token_payload.get("client_id")
     if not platform_id:
         raise HTTPException(
@@ -165,6 +166,13 @@ async def post_activity(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(platform_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     platform_name = token_payload.get("client_name")
     if not platform_name:

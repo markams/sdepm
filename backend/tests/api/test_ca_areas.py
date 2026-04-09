@@ -97,6 +97,23 @@ class TestCAAreaAPI:
         data = response.json()
         assert data["areaId"] == "my-custom-id"
 
+    async def test_post_area_with_uppercase_area_id(
+        self, async_session: AsyncSession, setup_overrides
+    ):
+        """Test POST /ca/areas accepts uppercase characters in areaId."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app_v0), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/ca/areas",
+                files={"file": ("Area.zip", b"zipdata", "application/zip")},
+                data={"areaId": "My-AREA-Id-123"},
+                headers={"Authorization": "Bearer test_token"},
+            )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.json()["areaId"] == "My-AREA-Id-123"
+
     async def test_post_area_with_area_name(
         self, async_session: AsyncSession, setup_overrides
     ):
@@ -227,6 +244,22 @@ class TestCAAreaAPI:
                 "/ca/areas",
                 files={"file": ("Area.zip", b"zipdata", "application/zip")},
                 data={"areaId": "INVALID_ID"},
+                headers={"Authorization": "Bearer test_token"},
+            )
+
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
+
+    async def test_post_area_area_id_too_long(
+        self, async_session: AsyncSession, setup_overrides
+    ):
+        """Test POST /ca/areas with areaId longer than 64 chars returns 422."""
+        async with AsyncClient(
+            transport=ASGITransport(app=app_v0), base_url="http://test"
+        ) as client:
+            response = await client.post(
+                "/ca/areas",
+                files={"file": ("Area.zip", b"zipdata", "application/zip")},
+                data={"areaId": "a" * 65},
                 headers={"Authorization": "Bearer test_token"},
             )
 

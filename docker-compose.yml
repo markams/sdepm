@@ -1,5 +1,5 @@
 #
-# See ./env for environment variables being used
+# Docker Compose uses .env and, when present, .env.extra via the Makefile wrappers.
 #
 
 volumes:

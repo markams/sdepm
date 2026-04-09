@@ -1,5 +1,11 @@
 # Changelog
 
+## 260409
+
+- Improved functional ID validation >> accepts uppercase alphanumeric IDs too
+- Made local Postgres port configurable per developer
+- Improved documentation for performance test data
+
 ## 260401
 
 - Harmonized Address to EU/INSPIRE >> impacts API >> see [migration guide](./docs/MIGRATION_ADDRESS_INSPIRE.md)

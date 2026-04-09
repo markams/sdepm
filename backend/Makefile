@@ -28,15 +28,14 @@ install: ## Install dependencies (from lockfile)
 ##@ Alembic
 
 upgrade: ## Upgrade database to latest revision
-	@export SQLALCHEMY_URL="$(POSTGRES_URL)" && \
-	uv run alembic upgrade head
+	@uv run alembic upgrade head
 
 upgrade-sql: ## Show upgrade SQL (offline, no database needed)
 	@uv run alembic upgrade head --sql
 
 downgrade: ## Downgrade database by one revision
 	@echo "Downgrading database by one revision..."
-	@export SQLALCHEMY_URL="$(POSTGRES_URL)" && uv run alembic downgrade -1
+	@uv run alembic downgrade -1
 
 revision: ## Create revision (MSG='description')
 	@echo "Creating new migration revision..."
@@ -44,11 +43,11 @@ revision: ## Create revision (MSG='description')
 		echo "Usage: make revision MSG='Description of changes'"; \
 		exit 1; \
 	fi
-	@export SQLALCHEMY_URL="$(POSTGRES_URL)" && uv run alembic revision --autogenerate -m "$(MSG)"
+	@uv run alembic revision --autogenerate -m "$(MSG)"
 
 show-current: ## Show current database revision
 	@echo "Showing current database revision..."
-	@export SQLALCHEMY_URL="$(POSTGRES_URL)" && uv run alembic current
+	@uv run alembic current
 
 show-history: ## Show migration history (offline, no database needed)
 	@uv run alembic history

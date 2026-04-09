@@ -11,6 +11,8 @@ from pydantic import (
     model_serializer,
 )
 
+from app.schemas.common import FunctionalId  # noqa: TC001
+
 
 def empty_string_to_none(v: str | None) -> str | None:
     """Convert empty string to None for optional ID fields.
@@ -31,13 +33,10 @@ class AreaResponse(BaseModel):
         from_attributes=True,
         populate_by_name=True,
     )
-    area_id: str = Field(
+    area_id: FunctionalId = Field(
         ...,
         alias="areaId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Area functional ID (alphanumeric with hyphens, max 64 chars)",
         examples=["3ab7c2b9-5c8d-4100-bc3e-00ac115f0495"],
     )  # Functional ID
     area_name: str | None = Field(
@@ -53,13 +52,10 @@ class AreaResponse(BaseModel):
         description="Area filename",
         examples=["Amsterdam.zip"],
     )  # Attribute
-    competent_authority_id: str = Field(
+    competent_authority_id: FunctionalId = Field(
         ...,
         alias="competentAuthorityId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Competent authority functional ID who submitted the area (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Competent authority functional ID who submitted the area (alphanumeric with hyphens, max 64 chars)",
         examples=["sdep-ca0363"],
     )  # Attribute
     competent_authority_name: str | None = Field(
@@ -104,13 +100,10 @@ class AreaOwnResponse(BaseModel):
         from_attributes=True,
         populate_by_name=True,
     )
-    area_id: str = Field(
+    area_id: FunctionalId = Field(
         ...,
         alias="areaId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Area functional ID (alphanumeric with hyphens, max 64 chars)",
         examples=["3ab7c2b9-5c8d-4100-bc3e-00ac115f0495"],
     )
     area_name: str | None = Field(

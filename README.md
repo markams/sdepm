@@ -61,6 +61,7 @@ Incl. local infra (postgres + keycloak + backend):
 ```
 make up
 ```
+Ports for the started services are defined in .env. To override any of these values, define them in .env.extra.
 
 Explore API docs (Swagger UI):
 

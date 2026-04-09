@@ -16,6 +16,8 @@ from pydantic import (
 )
 from pydantic_extra_types.country import CountryAlpha3
 
+from app.schemas.common import FunctionalId, OptionalFunctionalId  # noqa: TC001
+
 __all__ = [
     "ActivityCountResponse",
     "ActivityListResponse",
@@ -197,14 +199,17 @@ class ActivityRequest(BaseModel):
         populate_by_name=True,  # Allow both snake_case and camelCase
     )
 
-    activity_id: Annotated[str | None, BeforeValidator(empty_string_to_none)] = Field(
+    activity_id: Annotated[
+        OptionalFunctionalId,
+        BeforeValidator(empty_string_to_none),
+    ] = Field(
         None,
         alias="activityId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Activity functional ID (optional, auto-generated UUID if not provided; lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["550e8400-e29b-41d4-a716-446655440000"],
+        description="Activity functional ID (optional, auto-generated UUID if not provided; alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550E8400-E29B-41D4-A716-446655440000",
+        ],
     )  # Functional ID
 
     activity_name: str | None = Field(
@@ -215,14 +220,14 @@ class ActivityRequest(BaseModel):
         examples=["Amsterdam Summer Rental"],
     )  # Functional name
 
-    area_id: str = Field(
+    area_id: FunctionalId = Field(
         ...,
         alias="areaId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["3ab7c2b9-5c8d-4100-bc3e-00ac115f0495"],
+        description="Area functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
+            "3AB7C2B9-5C8D-4100-BC3E-00AC115F0495",
+        ],
     )  # Functional ID reference
 
     url: str = Field(
@@ -383,14 +388,14 @@ class ActivityResponse(BaseModel):
         populate_by_name=True,
     )
 
-    activity_id: str = Field(
+    activity_id: FunctionalId = Field(
         ...,
         alias="activityId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Activity functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["550e8400-e29b-41d4-a716-446655440000"],
+        description="Activity functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550E8400-E29B-41D4-A716-446655440000",
+        ],
     )  # Functional ID
     activity_name: str | None = Field(
         None,
@@ -398,13 +403,14 @@ class ActivityResponse(BaseModel):
         max_length=64,
         description="Activity name (optional, max 64 chars)",
     )  # Functional name
-    area_id: str = Field(
+    area_id: FunctionalId = Field(
         ...,
         alias="areaId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Area functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
+            "3AB7C2B9-5C8D-4100-BC3E-00AC115F0495",
+        ],
     )  # Functional ID reference
     url: str = Field(..., description="URL of the advertisement")  # Attribute
     address: AddressResponse = Field(..., description="Address composite")  # Composite
@@ -424,13 +430,11 @@ class ActivityResponse(BaseModel):
     temporal: TemporalResponse = Field(
         ..., description="Temporal composite"
     )  # Composite
-    platform_id: str = Field(
+    platform_id: FunctionalId = Field(
         ...,
         alias="platformId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Platform functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Platform functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=["str01", "STR01"],
     )  # Attribute
     platform_name: str | None = Field(
         None,
@@ -468,14 +472,14 @@ class ActivityOwnResponse(BaseModel):
         populate_by_name=True,
     )
 
-    activity_id: str = Field(
+    activity_id: FunctionalId = Field(
         ...,
         alias="activityId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Activity functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
-        examples=["550e8400-e29b-41d4-a716-446655440000"],
+        description="Activity functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "550e8400-e29b-41d4-a716-446655440000",
+            "550E8400-E29B-41D4-A716-446655440000",
+        ],
     )
     activity_name: str | None = Field(
         None,
@@ -483,21 +487,20 @@ class ActivityOwnResponse(BaseModel):
         max_length=64,
         description="Activity name (optional, max 64 chars)",
     )
-    area_id: str = Field(
+    area_id: FunctionalId = Field(
         ...,
         alias="areaId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Area functional ID (lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Area functional ID (alphanumeric with hyphens, max 64 chars)",
+        examples=[
+            "3ab7c2b9-5c8d-4100-bc3e-00ac115f0495",
+            "3AB7C2B9-5C8D-4100-BC3E-00AC115F0495",
+        ],
     )
-    competent_authority_id: str = Field(
+    competent_authority_id: FunctionalId = Field(
         ...,
         alias="competentAuthorityId",
-        min_length=1,
-        max_length=64,
-        pattern=r"^[a-z0-9-]+$",
-        description="Competent authority functional ID who owns the referenced area (convenience; lowercase alphanumeric with hyphens, max 64 chars)",
+        description="Competent authority functional ID who owns the referenced area (convenience; alphanumeric with hyphens, max 64 chars)",
+        examples=["sdep-ca0363", "SDEP-CA0363"],
     )
     competent_authority_name: str | None = Field(
         None,

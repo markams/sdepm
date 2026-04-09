@@ -9,6 +9,8 @@ SHELL := /bin/bash
 
 .DEFAULT_GOAL := help
 
+DOCKER_COMPOSE := docker compose --env-file .env $(if $(wildcard .env.extra),--env-file .env.extra,)
+
 DBGATE_PID_FILE := /tmp/dbgate.pid
 DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86_64\.AppImage
 
@@ -18,7 +20,7 @@ DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86
 	@echo "🧹 Cleaning stale containers..."
 	@set -a && source .env && set +a && \
 	docker ps -a --filter "name=$$APP_PREFIX" --filter "status=exited" -q | xargs -r docker rm -f || true
-	@docker compose rm -f initdb 2>/dev/null || true
+	@$(DOCKER_COMPOSE) rm -f initdb 2>/dev/null || true
 	@echo "✅ Stale containers cleaned!"
 
 
@@ -30,7 +32,7 @@ DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86
 
 .migrate-database: ## Migrate database (create/update tables)
 	@echo "🔄 Running database migrations..."
-	@docker exec -i $$(docker compose ps -q backend) alembic upgrade head
+	@docker exec -i $$($(DOCKER_COMPOSE) ps -q backend) alembic upgrade head
 	@echo "✅ Database migrations completed!"
 
 .keycloak-wait: ## Wait until keycloak allows to authenticate
@@ -96,7 +98,7 @@ DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86
 
 .build: ## Build
 	@echo "🐳 Building fullstack..."
-	docker compose build
+	$(DOCKER_COMPOSE) build
 	@echo "✅ Fullstack built successfully!"
 	@echo "📊 Images"
 	@set -a && source .env && set +a && docker images | grep $$APP_PREFIX
@@ -105,19 +107,19 @@ DBGATE_PROCESS_PATTERN := /tmp/.mount_[d]bgate.*/dbgate|dbgate-7\.1\.2-linux_x86
 
 postgres-up: .clean-stale ## Start postgres
 	@echo "🚀 Starting postgres..."
-	docker compose up -d postgres
+	$(DOCKER_COMPOSE) up -d postgres
 	@echo "✅ Postgres started!"
 
 postgres-down: ## Stop and remove postgres (including volumes)
 	@echo "🛑 Stopping postgres..."
-	docker compose stop postgres
-	docker compose rm -f -v postgres
+	$(DOCKER_COMPOSE) stop postgres
+	$(DOCKER_COMPOSE) rm -f -v postgres
 	@docker volume rm $$(docker volume ls -q | grep postgres_data) 2>/dev/null || true
 	@echo "✅ Postgres stopped, removed, and volumes cleaned!"
 
 postgres-login: ## Login to postgres
 	@echo "🔐 Connecting to PostgreSQL..."
-	docker exec -it $$(docker compose ps -q postgres) psql -U postgres -d sdep-data
+	docker exec -it $$($(DOCKER_COMPOSE) ps -q postgres) psql -U postgres -d sdep-data
 
 postgres-status: ## Show postgres tables (SDEP)
 	@set -a && source .env && set +a && \
@@ -188,7 +190,7 @@ postgres-clean-migrate-load: .clean-stale ## Clean postgres (drop + migrate + lo
 	@echo "✅ SDEP database reset and loaded!"
 
 postgres-logs: ## Show postgres logs
-	docker compose logs -f sdep-postgres
+	$(DOCKER_COMPOSE) logs -f sdep-postgres
 
 ##@ DBGate (optional)
 
@@ -283,7 +285,7 @@ dbgate-logs: ## Tail DBGate log file
 
 keycloak-up: postgres-up ## Start keycloak
 	@echo "🚀 Starting Keycloak..."
-	docker compose up -d keycloak
+	$(DOCKER_COMPOSE) up -d keycloak
 	@echo "✅ Keycloak started!"
 	@echo "🚀 Configuring Keycloak..."
 	@$(MAKE) --no-print-directory .keycloak-machine-clients
@@ -291,37 +293,37 @@ keycloak-up: postgres-up ## Start keycloak
 
 keycloak-down: ## Stop and remove keycloak (including volumes)
 	@echo "🛑 Stopping Keycloak..."
-	docker compose stop keycloak
-	docker compose rm -f -v keycloak
+	$(DOCKER_COMPOSE) stop keycloak
+	$(DOCKER_COMPOSE) rm -f -v keycloak
 	@echo "✅ Keycloak stopped, removed, and volumes cleaned!"
 
 keycloak-logs: ## Show keycloak logs
-	docker compose logs -f sdep-keycloak
+	$(DOCKER_COMPOSE) logs -f sdep-keycloak
 
 ##@ Backend
 
 backend-up: .build .clean-stale ## Start backend
 	@echo "🚀 Starting backend..."
-	docker compose up -d backend
+	$(DOCKER_COMPOSE) up -d backend
 	@echo "✅ Backend started! "
 	@echo "Run 'make status' to explore URLs"
 
 backend-down: ## Stop and remove backend (including volumes)
 	@echo "🛑 Stopping backend..."
-	docker compose stop backend
-	docker compose rm -f -v backend
+	$(DOCKER_COMPOSE) stop backend
+	$(DOCKER_COMPOSE) rm -f -v backend
 	@echo "✅ Backend stopped, removed, and volumes cleaned!"
 
 backend-restart: backend-down backend-up ## Stop and restart backend
 
 backend-logs: ## Show backend logs
-	docker compose logs -f backend
+	$(DOCKER_COMPOSE) logs -f backend
 
 ##@ Fullstack (keycloak + postgres + backend + testdata)
 
 up: .build .clean-stale ## Start
 	@echo "🚀 Starting full-stack..."
-	docker compose up -d
+	$(DOCKER_COMPOSE) up -d
 	@echo "✅ Fullstack started!"
 
 	@echo "🚀 Configuring Keycloak..."
@@ -338,7 +340,7 @@ up: .build .clean-stale ## Start
 
 down: ## Stop and remove
 	@echo "🛑 Stopping full-stack..."
-	docker compose down -v # Includes volume deletion
+	$(DOCKER_COMPOSE) down -v # Includes volume deletion
 	@echo "✅ Fullstack stopped!"
 
 restart: down up ## Stop and start
@@ -346,7 +348,7 @@ restart: down up ## Stop and start
 status: ## Show status
 	@echo ""
 	@echo "🔍 Images:"BACKEND_TEST_REPO
-	@docker compose ps
+	@$(DOCKER_COMPOSE) ps
 	@echo ""
 	@echo "🔍 Use these URLs when images are running:"
 	@set -a && source .env && set +a && \
@@ -356,7 +358,7 @@ status: ## Show status
 	@echo ""
 
 logs: ## Show logs
-	docker compose logs -f
+	$(DOCKER_COMPOSE) logs -f
 
 ##@ Test
 

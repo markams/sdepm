@@ -23,6 +23,7 @@ from app.schemas.activity_bulk import (
     BulkActivityRequest,
     BulkActivityResponse,
 )
+from app.schemas.common import validate_functional_id
 from app.schemas.error import ErrorResponse
 from app.security import verify_bearer_token
 from app.services import activity_bulk as activity_bulk_service
@@ -228,7 +229,7 @@ async def post_activities_bulk(
             detail="Access forbidden: 'sdep_write' role required",
         )
 
-    # Extract platform ID and name from token
+    # Extract and validate platform ID and name from token
     platform_id = token_payload.get("client_id")
     if not platform_id:
         raise HTTPException(
@@ -236,6 +237,13 @@ async def post_activities_bulk(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(platform_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     platform_name = token_payload.get("client_name")
     if not platform_name:

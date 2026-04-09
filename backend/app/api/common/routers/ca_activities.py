@@ -13,6 +13,7 @@ from app.schemas.activity import (
     AddressResponse,
     TemporalResponse,
 )
+from app.schemas.common import validate_functional_id
 from app.schemas.error import ErrorResponse
 from app.security import verify_bearer_token
 from app.services import activity
@@ -142,7 +143,7 @@ async def get_activities(
             detail="Access forbidden: 'sdep_read' role required",
         )
 
-    # Extract competent authority ID from token's client_id claim
+    # Extract and validate competent authority ID from token's client_id claim
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -150,6 +151,13 @@ async def get_activities(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     # Call business service with competent authority ID from token
     activity_list = await activity.get_activity_list(
@@ -244,7 +252,7 @@ async def count_activities(
             detail="Access forbidden: 'sdep_read' role required",
         )
 
-    # Extract competent authority ID from token's client_id claim
+    # Extract and validate competent authority ID from token's client_id claim
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -252,6 +260,13 @@ async def count_activities(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     # Call business service with competent authority ID from token
     total_count = await activity.count_activity_by_competent_authority(

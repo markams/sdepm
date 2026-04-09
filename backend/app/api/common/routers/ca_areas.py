@@ -12,7 +12,6 @@ Pattern:
 """
 
 import logging
-import re
 from typing import Annotated, Any
 
 from fastapi import (
@@ -21,6 +20,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Path,
     Query,
     Response,
     UploadFile,
@@ -35,6 +35,7 @@ from app.schemas.area import (
     AreaOwnListResponse,
     AreaOwnResponse,
 )
+from app.schemas.common import FunctionalId, OptionalFunctionalId, validate_functional_id
 from app.schemas.error import ErrorResponse
 from app.security import verify_bearer_token
 from app.services import area as area_service
@@ -43,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["ca"])
 
-AREA_ID_PATTERN = re.compile(r"^[a-z0-9-]+$")
 MAX_FILE_SIZE = 1048576  # 1 MiB
 
 
@@ -64,7 +64,7 @@ MAX_FILE_SIZE = 1048576  # 1 MiB
 - This is to ensure predictable performance, reduce abuse risk, and improve overall reliability
 
 **The request contains (multipart/form-data):**
-- `areaId`: Functional ID identifying this area (optional, auto-generated UUID if not provided; lowercase alphanumeric with hyphens `^[a-z0-9-]+$`, max 64 chars)
+- `areaId`: Functional ID identifying this area (optional, auto-generated UUID if not provided; alphanumeric with hyphens `^[A-Za-z0-9-]+$`, max 64 chars)
 - `areaName`: Optional human-readable name for this area (optional, max 64 chars)
 - `file`: Shapefile upload (required, max 1 MiB)
 
@@ -99,7 +99,7 @@ MAX_FILE_SIZE = 1048576  # 1 MiB
 async def post_area(
     session: AsyncSession = Depends(get_async_db),
     token_payload: dict[str, Any] = Depends(verify_bearer_token),
-    areaId: str | None = Form(None),
+    areaId: Annotated[OptionalFunctionalId, Form()] = None,
     areaName: str | None = Form(None),
     file: UploadFile = File(...),
 ) -> Response:
@@ -128,7 +128,7 @@ async def post_area(
             detail="Access forbidden: 'sdep_write' role required",
         )
 
-    # Extract competent authority ID and name from token
+    # Extract and validate competent authority ID and name from token
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -136,6 +136,13 @@ async def post_area(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     competent_authority_name = token_payload.get("client_name")
     if not competent_authority_name:
@@ -158,19 +165,6 @@ async def post_area(
     # Normalize empty strings to None
     area_id = areaId if areaId != "" else None
     area_name = areaName if areaName != "" else None
-
-    # Validate areaId format
-    if area_id is not None:
-        if len(area_id) > 64:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="areaId must be at most 64 characters.",
-            )
-        if not AREA_ID_PATTERN.match(area_id):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="areaId must match pattern ^[a-z0-9-]+$ (lowercase alphanumeric with hyphens).",
-            )
 
     # Validate areaName length
     if area_name is not None and len(area_name) > 64:
@@ -279,7 +273,7 @@ async def get_own_areas(
             detail="Access forbidden: 'sdep_read' role required",
         )
 
-    # Extract competent authority ID from token
+    # Extract and validate competent authority ID from token
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -287,6 +281,13 @@ async def get_own_areas(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     # Get areas for this CA
     area_dicts = await area_service.get_areas_by_competent_authority(
@@ -362,7 +363,7 @@ async def count_own_areas(
             detail="Access forbidden: 'sdep_read' role required",
         )
 
-    # Extract competent authority ID from token's client_id claim
+    # Extract and validate competent authority ID from token's client_id claim
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -370,6 +371,13 @@ async def count_own_areas(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     # Call business service with competent authority ID from token
     total_count = await area_service.count_areas_by_competent_authority(
@@ -403,7 +411,7 @@ async def count_own_areas(
     },
 )
 async def get_own_area(
-    areaId: str,
+    areaId: Annotated[FunctionalId, Path(...)],
     session: AsyncSession = Depends(get_async_db_read_only),
     token_payload: dict[str, Any] = Depends(verify_bearer_token),
 ) -> Response:
@@ -432,7 +440,7 @@ async def get_own_area(
             detail="Access forbidden: 'sdep_read' role required",
         )
 
-    # Extract competent authority ID from token
+    # Extract and validate competent authority ID from token
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -440,6 +448,13 @@ async def get_own_area(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(e),
+        ) from e
 
     # Get the area scoped to this CA
     area_data = await area_service.get_own_area_by_id(
@@ -499,7 +514,7 @@ async def get_own_area(
     },
 )
 async def delete_area(
-    areaId: str,
+    areaId: Annotated[FunctionalId, Path(...)],
     session: AsyncSession = Depends(get_async_db),
     token_payload: dict[str, Any] = Depends(verify_bearer_token),
 ) -> Response:
@@ -527,7 +542,7 @@ async def delete_area(
             detail="Access forbidden: 'sdep_write' role required",
         )
 
-    # Extract competent authority ID from token
+    # Extract and validate competent authority ID from token
     competent_authority_id = token_payload.get("client_id")
     if not competent_authority_id:
         raise HTTPException(
@@ -535,18 +550,13 @@ async def delete_area(
             detail="Invalid token: missing 'client_id' claim",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # Validate areaId format
-    if len(areaId) > 64:
+    try:
+        validate_functional_id(competent_authority_id, "client_id")
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="areaId must be at most 64 characters.",
-        )
-    if not AREA_ID_PATTERN.match(areaId):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="areaId must match pattern ^[a-z0-9-]+$ (lowercase alphanumeric with hyphens).",
-        )
+            detail=str(e),
+        ) from e
 
     # Delete the area (deactivate)
     await area_service.delete_area(
